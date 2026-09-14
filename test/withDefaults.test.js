@@ -45,4 +45,16 @@ describe('withDefaults', () => {
     const result = withDefaults(obj1, obj2);
     expect(result).toEqual({ a: 3, b: 2 });
   });
+
+  test('merges own properties from null-prototype objects', () => {
+    const values = Object.assign(Object.create(null), { active: true, optional: undefined });
+
+    expect(withDefaults(values)).toEqual({ active: true });
+  });
+
+  test('handles an own hasOwnProperty data property', () => {
+    const values = { hasOwnProperty: false, active: true };
+
+    expect(withDefaults(values)).toEqual({ hasOwnProperty: false, active: true });
+  });
 });

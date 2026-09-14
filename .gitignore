@@ -7,3 +7,4 @@
 !/\.yarn/versions
 /artifacts/
 /dist/
+/node_modules/

@@ -13,7 +13,7 @@ function withDefaults(...objects) {
     const obj = objects[i];
     if (obj && typeof obj === 'object') {
       for (const key in obj) {
-        if (obj.hasOwnProperty(key) && obj[key] !== undefined) {
+        if (Object.prototype.hasOwnProperty.call(obj, key) && obj[key] !== undefined) {
           result[key] = obj[key];
         }
       }
