@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2015",
+    "lib": ["ES5"],
+    "types": [],
+    "skipLibCheck": false
+  },
+  "include": ["merge-compat.cts"]
+}

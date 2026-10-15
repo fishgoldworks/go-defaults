@@ -1,103 +1,63 @@
 {
-  "name": "@fishgold/go-js",
-  "version": "0.1.0",
-  "description": "Small dependency-free JavaScript helpers.",
-  "license": "UNLICENSED",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.cts",
-  "exports": {
-    ".": {
-      "types": {
-        "import": "./dist/index.d.mts",
-        "require": "./dist/index.d.cts",
-        "default": "./dist/index.d.cts"
-      },
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs",
-      "default": "./dist/index.cjs"
-    },
-    "./wait": {
-      "types": {
-        "import": "./dist/wait.d.mts",
-        "require": "./dist/wait.d.cts",
-        "default": "./dist/wait.d.cts"
-      },
-      "import": "./dist/wait.mjs",
-      "require": "./dist/wait.cjs",
-      "default": "./dist/wait.cjs"
-    },
-    "./result": {
-      "types": {
-        "import": "./dist/result.d.mts",
-        "require": "./dist/result.d.cts",
-        "default": "./dist/result.d.cts"
-      },
-      "import": "./dist/result.mjs",
-      "require": "./dist/result.cjs",
-      "default": "./dist/result.cjs"
-    },
-    "./isJson": {
-      "types": {
-        "import": "./dist/isJson.d.mts",
-        "require": "./dist/isJson.d.cts",
-        "default": "./dist/isJson.d.cts"
-      },
-      "import": "./dist/isJson.mjs",
-      "require": "./dist/isJson.cjs",
-      "default": "./dist/isJson.cjs"
-    },
-    "./parseBool": {
-      "types": {
-        "import": "./dist/parseBool.d.mts",
-        "require": "./dist/parseBool.d.cts",
-        "default": "./dist/parseBool.d.cts"
-      },
-      "import": "./dist/parseBool.mjs",
-      "require": "./dist/parseBool.cjs",
-      "default": "./dist/parseBool.cjs"
-    },
-    "./defaultsFor": {
-      "types": {
-        "import": "./dist/defaultsFor.d.mts",
-        "require": "./dist/defaultsFor.d.cts",
-        "default": "./dist/defaultsFor.d.cts"
-      },
-      "import": "./dist/defaultsFor.mjs",
-      "require": "./dist/defaultsFor.cjs",
-      "default": "./dist/defaultsFor.cjs"
-    },
-    "./withDefaults": {
-      "types": {
-        "import": "./dist/withDefaults.d.mts",
-        "require": "./dist/withDefaults.d.cts",
-        "default": "./dist/withDefaults.d.cts"
-      },
-      "import": "./dist/withDefaults.mjs",
-      "require": "./dist/withDefaults.cjs",
-      "default": "./dist/withDefaults.cjs"
-    }
-  },
-  "files": [
-    "dist",
-    "src",
-    "LICENSE",
-    "PROVENANCE.md",
-    "README.md"
+  "name": "go-defaults",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Apply default values to missing or undefined object properties.",
+  "license": "MIT",
+  "author": "Michael Ko",
+  "keywords": [
+    "defaults",
+    "default-values",
+    "objects",
+    "shallow-merge",
+    "undefined",
+    "javascript",
+    "typescript"
   ],
+  "homepage": "https://github.com/fishgoldworks/go-defaults",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fishgoldworks/go-defaults.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fishgoldworks/go-defaults/issues"
+  },
+  "main": "./package/dist/index.cjs",
+  "types": "./package/dist/index.d.ts",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "test:runtime": "node --test test/public-contract.test.cjs && jest --runInBand",
-    "test:types": "tsc -p test/tsconfig.json",
-    "test": "yarn build && yarn test:runtime && yarn test:types",
-    "validate": "yarn test",
-    "prepack": "yarn build"
+    "build:untransformed": "node scripts/build-untransformed.mjs",
+    "docs": "node scripts/docs.js",
+    "pack:package": "node scripts/pack-package.mjs",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix --max-warnings 0",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "test": "node scripts/test-contracts.mjs",
+    "test:docs": "node scripts/docs.js --check && node --test scripts/test-docs.js && node scripts/test-examples.js",
+    "test:types": "node scripts/test-types.mjs",
+    "test:build": "node --test scripts/test-build.mjs",
+    "test:tooling": "node --test scripts/test-tooling.mjs",
+    "test:artifacts": "node scripts/test-artifacts.mjs",
+    "test:package": "node scripts/test-package.mjs",
+    "test:browser": "node scripts/test-browser.mjs",
+    "test:contracts": "node scripts/test-contracts.mjs",
+    "coverage": "node scripts/test-contracts.mjs --coverage",
+    "verify": "node scripts/verify.mjs",
+    "verify:all": "node scripts/verify.mjs --all",
+    "benchmark": "node scripts/benchmark.mjs",
+    "prepack": "node scripts/root-package-guard.js",
+    "prepublishOnly": "node scripts/root-package-guard.js"
   },
-  "sideEffects": false,
-  "packageManager": "yarn@4.6.0",
   "devDependencies": {
+    "@eslint/js": "10.0.1",
     "esbuild": "0.28.2",
-    "jest": "29.7.0",
-    "typescript": "6.0.3"
+    "eslint": "10.11.0",
+    "globals": "16.5.0",
+    "playwright": "1.57.0",
+    "prettier": "3.9.6",
+    "terser": "5.51.2",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.70.1"
   }
 }

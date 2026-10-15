@@ -1,5 +1,4 @@
-import helpers from './index.cjs';
-
-const { wait, result, isJson, parseBool, defaultsFor, withDefaults } = helpers;
-
-export { wait, result, isJson, parseBool, defaultsFor, withDefaults };
+import Defaults from './index.cjs';
+const { defaultsFor, withDefaults } = Defaults;
+export { defaultsFor, withDefaults };
+export default Defaults;

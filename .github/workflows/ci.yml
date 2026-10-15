@@ -1,0 +1,86 @@
+name: Verify
+on: [push, pull_request]
+# The jobs need checkout and artifact transfer, not write or workflow permissions.
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24.20.0'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npm run verify:all
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-candidate
+          path: artifacts/*
+  consumer:
+    needs: verify
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ['8.0.0', '13.0.0', '12.17.0', '24.20.0']
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24.20.0'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: release-candidate
+          path: artifacts
+      - name: Install exactly the verified candidate
+        run: |
+          archive=$(find artifacts -name '*.tgz')
+          echo "$(cat "$archive.sha256")  $archive" | sha256sum --check
+          mkdir consumer
+          npm install --prefix consumer --ignore-scripts --no-audit --no-fund "$PWD/$archive"
+          cp test/consumers/consumer.cjs test/consumers/consumer.mjs consumer/
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ matrix.node }}
+      - run: node consumer/consumer.cjs
+      - if: matrix.node != '8.0.0' && matrix.node != '13.0.0'
+        run: node consumer/consumer.mjs
+
+  typescript:
+    needs: verify
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        typescript: ['4.5.2', '4.7.2', '5.0.2', '5.4.5', '6.0.3']
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '8.0.0'
+      - name: Record the minimum CommonJS runtime
+        run: echo "GO_DEFAULTS_NODE8=$(command -v node)" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24.20.0'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: release-candidate
+          path: artifacts
+      - name: Install the verified package and selected compiler
+        run: |
+          mapfile -t archives < <(find artifacts -maxdepth 1 -name '*.tgz' -type f)
+          test "${#archives[@]}" -eq 1
+          archive="${archives[0]}"
+          echo "$(cat "$archive.sha256")  $archive" | sha256sum --check
+          npm install --prefix "$RUNNER_TEMP/consumer" --ignore-scripts --no-audit --no-fund "$PWD/$archive"
+          npm install --prefix "$RUNNER_TEMP/compiler" --ignore-scripts --no-audit --no-fund "typescript@${{ matrix.typescript }}"
+      - name: Check declarations and emitted consumers
+        run: node scripts/test-types.mjs --compiler "$RUNNER_TEMP/compiler/node_modules/typescript/lib/tsc.js" --package "$RUNNER_TEMP/consumer/node_modules/go-defaults"

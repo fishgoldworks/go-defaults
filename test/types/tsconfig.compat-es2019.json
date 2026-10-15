@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2019",
+    "lib": ["ES2019"],
+    "types": [],
+    "skipLibCheck": false
+  },
+  "include": ["merge-compat.cts"]
+}

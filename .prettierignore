@@ -1,0 +1,26 @@
+# Dependencies and package-manager state
+node_modules/
+
+# Generated distributions and documentation
+/README.md
+/artifacts/
+/dist/
+/docs/API.md
+/package/
+
+# Build staging and temporary files
+.tmp/
+/.go-defaults-build-*/
+temp/
+
+# Coverage and local test results
+/coverage/
+
+# Lockfiles
+/package-lock.json
+
+# Legal text
+/LICENSE.md
+
+# Editor and operating-system files
+.DS_Store

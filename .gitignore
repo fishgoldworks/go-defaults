@@ -1,10 +1,22 @@
-/.pnp.*
-/.yarn/*
-!/\.yarn/patches
-!/\.yarn/plugins
-!/\.yarn/releases
-!/\.yarn/sdks
-!/\.yarn/versions
+# Dependencies and package-manager state
+node_modules/
+
+# Generated distributions and documentation
 /artifacts/
 /dist/
-/node_modules/
+/package/
+
+# Build staging and temporary files
+.tmp/
+/.go-defaults-build-*/
+temp/
+
+# Coverage and local test results
+/coverage/
+
+# Package archives
+*.tgz
+
+# Editor and operating-system files
+.DS_Store
+/nbproject/
