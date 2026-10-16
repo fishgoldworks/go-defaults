@@ -168,12 +168,6 @@ npm install ./artifacts/go-defaults-{{VERSION}}.tgz
 - [Full API documentation](docs/API.md)
 - [Changelog](CHANGELOG.md)
 
-## Support this project
-
-If you find Go Defaults useful, consider supporting its development.
-
-[Donate via PayPal](https://www.paypal.com/donate/?business=T7Q29NNMZVW98&no_recurring=0&item_name=Support+Go+Defaults&currency_code=USD)
-
 ## Licence
 
 Licensed under the [MIT licence](LICENSE.md).
