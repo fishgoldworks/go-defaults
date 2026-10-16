@@ -9,10 +9,19 @@ const directory = process.env.GO_DEFAULTS_BROWSER_PACKAGE || path.resolve(__dirn
 const filenames = ['go-defaults.js', 'go-defaults.min.js'];
 let server;
 let address;
+let exampleBundleUrl;
 before(async () => {
   const readme = fs.readFileSync(path.join(directory, 'README.md'), 'utf8');
   const example = /```html\r?\n([\s\S]*?)```/.exec(readme);
   assert.ok(example, 'The packaged README must provide a runnable script-tag example');
+  const metadata = JSON.parse(fs.readFileSync(path.join(directory, 'package.json'), 'utf8'));
+  exampleBundleUrl = 'https://cdn.jsdelivr.net/npm/go-defaults@' + metadata.version + '/dist/go-defaults.min.js';
+  const sources = [...example[1].matchAll(/<script src="([^"]+)"><\/script>/g)].map((match) => match[1]);
+  assert.equal(sources.length, 1, 'The README example loads one browser bundle');
+  assert.ok(
+    [exampleBundleUrl, './dist/go-defaults.min.js'].includes(sources[0]),
+    'The README example must use this package version or its local bundle'
+  );
   const scripts = new Map(
     filenames.map((name) => ['/dist/' + name, fs.readFileSync(path.join(directory, 'dist', name))])
   );
@@ -68,6 +77,13 @@ for (const [name, engine] of Object.entries({ chromium, firefox, webkit })) {
         const page = await browser.newPage();
         try {
           const errors = [];
+          // Test the supplied package before publication without depending on CDN availability.
+          await page.route(exampleBundleUrl, (route) =>
+            route.fulfill({
+              path: path.join(directory, 'dist', 'go-defaults.min.js'),
+              contentType: 'text/javascript'
+            })
+          );
           page.on('pageerror', (error) => errors.push(error.message));
           await page.goto(address + '/example');
           assert.deepEqual(errors, []);

@@ -104,11 +104,16 @@ CommonJS helper subpaths return the function directly. Root and subpath imports 
 
 ### Browser script tag
 
-Copy `dist/go-defaults.min.js` from the installed package to your site and load it before your own script. It exposes `goDefaults.withDefaults` and `goDefaults.defaultsFor`:
+Load Go Defaults directly from jsDelivr, or download a bundle to host on your own site. Neither option requires npm:
+
+- [Download the minified bundle](https://cdn.jsdelivr.net/npm/go-defaults@{{VERSION}}/dist/go-defaults.min.js)
+- [Download the readable bundle](https://cdn.jsdelivr.net/npm/go-defaults@{{VERSION}}/dist/go-defaults.js)
+
+These links use version {{VERSION}} and stay on that version when newer releases are published. The example below loads the minified bundle before your own script, exposing `goDefaults.withDefaults` and `goDefaults.defaultsFor`:
 
 <!-- prettier-ignore -->
 ```html
-<script src="./dist/go-defaults.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/go-defaults@{{VERSION}}/dist/go-defaults.min.js"></script>
 <script>
   const result = goDefaults.withDefaults(
     { title: 'Home', visible: true },
@@ -121,7 +126,7 @@ Copy `dist/go-defaults.min.js` from the installed package to your site and load 
 </script>
 ```
 
-Use `dist/go-defaults.js` for the readable bundle or `dist/go-defaults.min.js` for the smaller minified bundle. Both are self-contained UMD files with source maps and MIT notices; they also support CommonJS and AMD loaders. The generated package's `unpkg` and `jsdelivr` entries select the minified file.
+To host the bundle yourself, save either linked file to your site and replace the script URL with its local path, such as `./dist/go-defaults.min.js`. Both files are also included under `dist/` in the npm package. They are self-contained UMD bundles with source maps and MIT notices, and support CommonJS and AMD loaders.
 
 The regular `dist/index.mjs` entry and helper `.mjs` files are wrappers around CommonJS. Use a bundler for those imports; they are not standalone browser modules. The browser bundles target ES2017, with no polyfills. The release checks run in Chromium, Firefox and WebKit; the target is not a promise of support for every older browser.
 
