@@ -10,9 +10,9 @@
 - **Version:** [1.0.0](CHANGELOG.md)
 - **Licence:** [MIT](LICENSE.md)
 
-Use `withDefaults(defaults, ...overrides)` to combine defaults with overrides into a new object, without writing a separate fallback for each property. Overrides are applied from left to right: missing properties and `undefined` leave earlier values unchanged, while all other values—including `null`, `false`, `0`, and empty strings—replace them. This follows the same undefined-only fallback rule as JavaScript default parameters and destructuring defaults.
+Use `withDefaults(defaults, ...overrides)` to combine defaults and overrides into a new object. Overrides apply from left to right: missing properties and `undefined` keep earlier values, while all other values—including `null`, `false`, `0` and empty strings—replace them. This follows the same undefined-only fallback rule as JavaScript default parameters and destructuring defaults.
 
-The merge is shallow, so nested objects and arrays retain their original references. When you need to apply the same defaults repeatedly, use `defaultsFor(defaults)` to create a reusable function that combines those defaults with the overrides you supply.
+The merge is shallow: nested objects and arrays keep their original references. Use `defaultsFor(defaults)` to create a reusable function when you apply the same defaults repeatedly.
 
 No runtime dependencies. TypeScript declarations included.
 
@@ -44,32 +44,19 @@ Using Yarn:
 yarn add go-defaults
 ```
 
-### Compatibility
+### Runtime support
 
-| Environment | Requirement                                                                                      |
-| ----------- | ------------------------------------------------------------------------------------------------ |
-| CommonJS    | Node.js 8.0.0 or later, including root and helper subpaths.                                      |
-| ES modules  | Node.js 12.17.0+ within 12.x, or Node.js 14.0.0 and newer.                                       |
-| Browser     | Standalone ES2017 bundles; requires `Reflect.ownKeys`. See [browser usage](#browser-script-tag). |
-| TypeScript  | TypeScript 4.5.2 or later. See [compiler support](docs/API.md#compiler-support).                 |
+| Environment | Requirement                                                                           |
+| ----------- | ------------------------------------------------------------------------------------- |
+| CommonJS    | Node.js 8.0.0 or later, including root and helper subpaths.                           |
+| ES modules  | Node.js 12.17.0+ within 12.x, or Node.js 14.0.0 and newer.                            |
+| Browser     | Standalone ES2017 bundles; requires `Reflect.ownKeys`. See [browser usage](#browser). |
 
-These are configured compatibility targets. CI configuration is not evidence of successful execution. No global polyfills are installed.
+No global polyfills are installed.
 
 ## Usage
 
 ### ES modules
-
-<!-- prettier-ignore -->
-```javascript
-import Defaults from 'go-defaults';
-
-const defaults = { title: 'Home', visible: true, count: 10 };
-const overrides = { title: undefined, visible: false, count: 0 };
-
-Defaults.withDefaults(defaults, overrides);  // => { title: 'Home', visible: false, count: 0 }
-```
-
-Or import individual functions:
 
 <!-- prettier-ignore -->
 ```javascript
@@ -110,41 +97,46 @@ applyDefaults();                                 // => { retries: 3 }
 
 CommonJS helper subpaths return the function directly. Root and subpath imports refer to the same functions.
 
-### Browser script tag
+### Browser
 
-Load Go Defaults directly from jsDelivr, or download a bundle to host on your own site. Neither option requires npm:
+Load Go Defaults from jsDelivr or host a bundle yourself:
 
-- [Download the minified bundle](https://cdn.jsdelivr.net/npm/go-defaults@1.0.0/dist/go-defaults.min.js)
-- [Download the readable bundle](https://cdn.jsdelivr.net/npm/go-defaults@1.0.0/dist/go-defaults.js)
+- [Minified bundle](https://cdn.jsdelivr.net/npm/go-defaults@1.0.0/dist/go-defaults.min.js)
+- [Readable bundle](https://cdn.jsdelivr.net/npm/go-defaults@1.0.0/dist/go-defaults.js)
 
-These links use version 1.0.0 and stay on that version when newer releases are published. The example below loads the minified bundle before your own script, exposing `goDefaults.withDefaults` and `goDefaults.defaultsFor`:
+The bundle exposes `goDefaults`:
 
 <!-- prettier-ignore -->
 ```html
 <script src="https://cdn.jsdelivr.net/npm/go-defaults@1.0.0/dist/go-defaults.min.js"></script>
 <script>
-  const result = goDefaults.withDefaults(
+  const { withDefaults, defaultsFor } = goDefaults;
+
+  const result = withDefaults(
     { title: 'Home', visible: true },
     { title: undefined, visible: false }
   );
-  console.log(result); // { title: 'Home', visible: false }
+  console.log(result);                             // => { title: 'Home', visible: false }
 
-  const applyDefaults = goDefaults.defaultsFor({ title: 'Home', visible: true });
-  console.log(applyDefaults({ title: 'About' })); // { title: 'About', visible: true }
+  const applyDefaults = defaultsFor({ title: 'Home', visible: true });
+  console.log(applyDefaults({ title: 'About' }));  // => { title: 'About', visible: true }
 </script>
 ```
 
-To host the bundle yourself, save either linked file to your site and replace the script URL with its local path, such as `./dist/go-defaults.min.js`. Both files are also included under `dist/` in the npm package. They are self-contained UMD bundles with source maps and MIT notices, and support CommonJS and AMD loaders.
+The bundles are self-contained and also support CommonJS and AMD loaders.
 
-The regular `dist/index.mjs` entry and helper `.mjs` files are wrappers around CommonJS. Use a bundler for those imports; they are not standalone browser modules. The browser bundles target ES2017, with no polyfills. The release checks run in Chromium, Firefox and WebKit; the target is not a promise of support for every older browser.
+The regular `dist/index.mjs` entry and helper `.mjs` files wrap CommonJS and require a bundler for browser use.
 
 ## API summary
+
+See the **[full API documentation](docs/API.md)** for parameters,
+return values, errors and examples.
 
 ### Object defaults
 
 | API | Description | Returns |
 | --- | --- | --- |
-| [`withDefaults(defaults, ...overrides)`](docs/API.md#withdefaultsdefaults-overrides) | Performs a shallow merge of defaults and overrides into a new object, preserving earlier values when a property is missing or `undefined`. | **`Object`**<br><br>A new plain object containing the combined properties. Nested objects and arrays retain their original references. |
+| [`withDefaults(defaults?, ...overrides)`](docs/API.md#withdefaultsdefaults-overrides) | Performs a shallow merge of defaults and overrides into a new object, preserving earlier values when a property is missing or `undefined`. | **`Object`**<br><br>A new plain object containing the combined properties. Nested objects and arrays retain their original references. |
 | [`defaultsFor(defaultValues)`](docs/API.md#defaultsfordefaultvalues) | Creates a reusable function that applies the same defaults to multiple objects using a shallow merge. | **`Function`** — `(...overrides) => Object`<br><br>A reusable function that combines the current defaults with its override arguments. Each call returns a new object; nested values keep their original references. |
 
 ## Behaviour
@@ -153,11 +145,21 @@ Only own enumerable string and symbol properties are copied. Inherited and non-e
 
 `defaultsFor` reads the original defaults on each call, so edits to that object affect future results. Nested objects remain shared: changing one through a result can also change the defaults. The [shared-value example](docs/API.md#shared-nested-values) shows this distinction. Neither helper writes to its sources, but getters and proxies can have side effects or throw.
 
-Whole arguments and property values have different rules. `withDefaults` and the function returned by `defaultsFor` skip `null` or `undefined` arguments; all other arguments must be objects. Creating the reusable function with `defaultsFor` requires an object other than `null`. Primitive and function arguments throw `TypeError`, while properties may contain any value, including functions. Arguments are processed in order, and side effects that occurred before an error are not undone.
+Input rules:
+
+- `withDefaults` and functions created by `defaultsFor` accept objects and skip `null` or `undefined` arguments.
+- `defaultsFor` requires a defaults object. Missing, `null` or `undefined` defaults throw `TypeError`.
+- Primitive and function arguments throw `TypeError`. Property values may be any type, including functions.
+
+Arguments are processed in order. Side effects that occur before an error are not undone.
 
 ## TypeScript
 
+TypeScript declarations are included; no separate `@types` package is required.
+
 For ordinary objects with known properties, TypeScript infers each result property's type from the defaults and overrides. Dictionaries, arrays, recognised native instances and source lists beyond the inference limit produce unknown-valued properties instead. TypeScript cannot determine property ownership or enumerability; widen custom class instances or unusual objects to `object` when that assumption does not hold. See the [typing examples and limits](docs/API.md#typescript).
+
+Consumer declarations support TypeScript 4.5.2 or later. Node16/NodeNext resolution requires TypeScript 4.7.2 or later, and Bundler resolution requires 5.0.2 or later. See [compiler support](docs/API.md#compiler-support) for the tested versions and resolution modes.
 
 ## Performance
 
@@ -165,15 +167,30 @@ Each merge visits the input objects' own keys and allocates a new result. `defau
 
 ## Development
 
-Use npm for development. Run `npm ci`, `npm run docs` and `npm run verify:all`. The build uses esbuild 0.28.2 and TypeScript 6.0.3. Contributor tools require Node.js 22.16.0 or newer; this is separate from consumer support.
+Use npm for development. Contributor tools require Node.js 22.16.0 or later, excluding Node.js 23. This requirement is separate from [consumer runtime support](#runtime-support). Contributor checks use TypeScript 6.0.3.
 
-Edit the templates under `scripts/` and run `npm run docs` to regenerate the README and API reference. Run `npm run build` before `npm test`: the normal esbuild build creates the complete `package/` directory, and the tests use Node's test runner.
+```sh
+npm ci
+npm run docs
+npm run build
+npm test
+```
 
-`npm run verify` builds the package and checks documentation examples, source coverage, declarations, build recovery, package contents, linting and formatting. It also tests the exact tarball in an installed consumer. `npm run verify:all` adds Chromium, Firefox and WebKit checks against that same installed tarball, including both browser bundles and the script-tag example above.
+Edit `scripts/README.template.md` and `scripts/API.template.md`. Run `npm run docs` to regenerate `README.md` and `docs/API.md` before building. `npm run build` assembles the complete consumer package under `package/`, including browser bundles in `package/dist/`.
 
-Install the test browsers once with `npx playwright install chromium firefox webkit` (add `--with-deps` on Linux when needed). Use `npm run test:browser` for a focused check of the current build, or `npm run test:browser -- --package <installed-package-directory>` for an installed candidate. Missing test browsers fail the check.
+Run the standard gate on a supported contributor Node version:
 
-The documentation badge measures reference coverage of both exported helpers. Neither badge claims exhaustive correctness. The development root remains private and rejects root packing/publication.
+```sh
+npm run verify
+```
+
+`npm run verify` checks lint, formatting, generated documentation, source coverage, declarations, build recovery, package contents and installed consumers. `npm run verify:all` adds Chromium, Firefox and WebKit checks against the same archive, including the browser bundles and README example.
+
+See the [development guide](https://github.com/fishgoldworks/go-defaults/blob/main/docs/project-validation.md) for browser setup, exact-runtime selection, build recovery and release verification.
+
+The coverage badge measures executable source-line coverage. The documentation badge measures public API reference coverage. Neither badge guarantees correctness for every input.
+
+The development root is private and rejects root packing and publication. Build and install a local package with:
 
 ```sh
 npm run pack:package
@@ -183,8 +200,9 @@ npm install ./artifacts/go-defaults-1.0.0.tgz
 
 ## Further reading
 
-- [Full API documentation](docs/API.md)
-- [Changelog](CHANGELOG.md)
+- [Full API documentation](docs/API.md): signatures, parameters, examples and behavioural contracts.
+- [Changelog](CHANGELOG.md): release changes.
+- [Development guide](https://github.com/fishgoldworks/go-defaults/blob/main/docs/project-validation.md): contributor setup, verification, release and benchmark procedures.
 
 ## Licence
 
