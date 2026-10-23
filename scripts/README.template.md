@@ -148,6 +148,8 @@ For ordinary objects with known properties, TypeScript infers each result proper
 
 Consumer declarations support TypeScript 4.5.2 or later. Node16/NodeNext resolution requires TypeScript 4.7.2 or later, and Bundler resolution requires 5.0.2 or later. See [compiler support](docs/API.md#compiler-support) for the tested versions and resolution modes.
 
+Named imports from function subpaths require Node16, NodeNext or Bundler resolution. With legacy `node` resolution, use named root imports or default subpath imports. Default subpath imports need `esModuleInterop` for CommonJS output, or `allowSyntheticDefaultImports` for ES module output.
+
 ## Performance
 
 Each merge visits the input objects' own keys and allocates a new result. `defaultsFor` reuses the function, but every call still reads the current defaults and applies its overrides; it does not cache a merged object.

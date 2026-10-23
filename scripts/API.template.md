@@ -314,6 +314,8 @@ Use **TypeScript 4.5.2 or later**. The minimum applies to the compiler that chec
 | Node16 / NodeNext                                        | 4.7.2                      |
 | Bundler                                                  | 5.0.2                      |
 
+Named imports from function subpaths require Node16, NodeNext or Bundler resolution. With legacy `node` resolution, use named root imports or default subpath imports. Default subpath imports need `esModuleInterop` for CommonJS output, or `allowSyntheticDefaultImports` for ES module output.
+
 All three use the same inference and input-validation contracts. The package includes generated `.d.ts` declarations for older resolution modes and `.d.cts` / `.d.mts` declarations for modern CommonJS and ESM resolution.
 
 TypeScript 4.4 and earlier are unsupported: the existing large-tuple inference cases exceed their type-recursion limits. Supporting them would require changing the declaration strategy or reducing the supported precision. The minimum preserves inference for up to 64 sources, undefined fallbacks, symbol and numeric keys, and rejection of known invalid inputs.

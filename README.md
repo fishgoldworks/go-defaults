@@ -7,7 +7,7 @@
 [![Source line coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](#development)
 [![Documentation](https://img.shields.io/badge/docs-100%25-brightgreen.svg)](docs/API.md)
 
-- **Version:** [1.0.0](CHANGELOG.md)
+- **Version:** [1.0.1](CHANGELOG.md)
 - **Licence:** [MIT](LICENSE.md)
 
 Use `withDefaults(defaults, ...overrides)` to combine defaults and overrides into a new object. Overrides apply from left to right: missing properties and `undefined` keep earlier values, while all other values—including `null`, `false`, `0` and empty strings—replace them. This follows the same undefined-only fallback rule as JavaScript default parameters and destructuring defaults.
@@ -101,14 +101,14 @@ CommonJS helper subpaths return the function directly. Root and subpath imports 
 
 Load Go Defaults from jsDelivr or host a bundle yourself:
 
-- [Minified bundle](https://cdn.jsdelivr.net/npm/go-defaults@1.0.0/dist/go-defaults.min.js)
-- [Readable bundle](https://cdn.jsdelivr.net/npm/go-defaults@1.0.0/dist/go-defaults.js)
+- [Minified bundle](https://cdn.jsdelivr.net/npm/go-defaults@1.0.1/dist/go-defaults.min.js)
+- [Readable bundle](https://cdn.jsdelivr.net/npm/go-defaults@1.0.1/dist/go-defaults.js)
 
 The bundle exposes `goDefaults`:
 
 <!-- prettier-ignore -->
 ```html
-<script src="https://cdn.jsdelivr.net/npm/go-defaults@1.0.0/dist/go-defaults.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/go-defaults@1.0.1/dist/go-defaults.min.js"></script>
 <script>
   const { withDefaults, defaultsFor } = goDefaults;
 
@@ -161,6 +161,8 @@ For ordinary objects with known properties, TypeScript infers each result proper
 
 Consumer declarations support TypeScript 4.5.2 or later. Node16/NodeNext resolution requires TypeScript 4.7.2 or later, and Bundler resolution requires 5.0.2 or later. See [compiler support](docs/API.md#compiler-support) for the tested versions and resolution modes.
 
+Named imports from function subpaths require Node16, NodeNext or Bundler resolution. With legacy `node` resolution, use named root imports or default subpath imports. Default subpath imports need `esModuleInterop` for CommonJS output, or `allowSyntheticDefaultImports` for ES module output.
+
 ## Performance
 
 Each merge visits the input objects' own keys and allocates a new result. `defaultsFor` reuses the function, but every call still reads the current defaults and applies its overrides; it does not cache a merged object.
@@ -194,8 +196,8 @@ The development root is private and rejects root packing and publication. Build 
 
 ```sh
 npm run pack:package
-npm run test:package -- --tarball ./artifacts/go-defaults-1.0.0.tgz
-npm install ./artifacts/go-defaults-1.0.0.tgz
+npm run test:package -- --tarball ./artifacts/go-defaults-1.0.1.tgz
+npm install ./artifacts/go-defaults-1.0.1.tgz
 ```
 
 ## Further reading

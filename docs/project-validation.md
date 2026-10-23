@@ -28,7 +28,7 @@ Keep each regression with the behavior it protects. Add a separate fixture only 
 
 ## Packaging and compatibility
 
-The private source root rejects packing/publication. `npm run build` creates `package/`; `npm run pack:package` builds and creates `artifacts/go-defaults-1.0.0.tgz` with its digest. The verify gate builds once, packs once and passes that exact archive to `npm run test:package -- --tarball <path>`. A missing archive must fail before packing. No unrelated helper, its declarations or stale distribution files may ship.
+The private source root rejects packing/publication. `npm run build` creates `package/`; `npm run pack:package` builds and creates `artifacts/go-defaults-<version>.tgz` with its digest. The verify gate builds once, packs once and passes that exact archive to `npm run test:package -- --tarball <path>`. A missing archive must fail before packing. No unrelated helper, its declarations or stale distribution files may ship.
 
 CommonJS targets Node 8.0.0 and native ESM wrappers target Node 12.17.0. Set `GO_DEFAULTS_NODE8`, `GO_DEFAULTS_ESM_NODE` and optionally `GO_DEFAULTS_NODE13` to actual runtime paths for installed checks. CI configuration is not evidence that remote jobs ran. For direct script tags, the normal build includes `dist/go-defaults.js` and `dist/go-defaults.min.js`, self-contained UMD bundles exposing `goDefaults`, with source maps and MIT notices. They target ES2017 and require `Reflect.ownKeys`; no polyfills are installed. The regular ESM wrappers still need bundling or CommonJS support in browsers. TypeScript 4.5.2 is the minimum consumer compiler. NodeNext is checked from 4.7.2 and Bundler from 5.0.2. CI checks exact compiler versions against the same verified tarball; a configured job is not evidence of a completed run.
 
@@ -37,6 +37,8 @@ CommonJS targets Node 8.0.0 and native ESM wrappers target Node 12.17.0. Set `GO
 `npm run build:untransformed` omits browser bundles and CDN metadata and is an explicitly requested diagnostic source-copy build; never substitute it for normal esbuild verification. Rebuild normally before release work. Directory replacement tests preserve the previous output on failure. If pruning the old backup fails after replacement, the diagnostic reports `committed: true`, `destination`, `previousBackup` and `cause`; the new destination is already live.
 
 Run `npm run test:types` after building to check an isolated consumer with the pinned compiler. To check another compiler, use `npm run test:types -- --compiler /path/to/typescript/lib/tsc.js`; add `--package /path/to/installed/go-defaults` to check an exact installed candidate. The runner reuses every CommonJS inference and rejection fixture, changing only its temporary file extension for compilers that predate `.cts`. It also checks modern module modes where available and runs emitted CommonJS with `GO_DEFAULTS_NODE8` when supplied.
+
+Legacy resolution checks include default imports from both function subpaths under CommonJS and ES module settings. Named subpath imports use Node16/NodeNext or Bundler resolution; the README documents the interop settings.
 
 CommonJS declarations under `types/` remain the maintained signatures. The build derives legacy `.d.ts` files and adjacent helper declarations from them; edit the maintained files rather than the generated copies. Keep the CommonJS/ESM parity fixture compatible with the oldest NodeNext compiler, without newer import-attribute syntax.
 

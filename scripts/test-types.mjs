@@ -99,6 +99,19 @@ export async function checkTypes({
       'emitted/legacy',
       ...legacyDeprecations
     ]);
+    compile([
+      'legacy/default-import.ts',
+      '--strict',
+      '--noEmit',
+      '--target',
+      'ES2015',
+      '--module',
+      'ESNext',
+      '--moduleResolution',
+      'node',
+      '--allowSyntheticDefaultImports',
+      ...legacyDeprecations
+    ]);
     process.stdout.write(run(process.execPath, ['emitted/legacy/default-import.js'], temporary));
     if (process.env.GO_DEFAULTS_NODE8)
       process.stdout.write(run(process.env.GO_DEFAULTS_NODE8, ['emitted/legacy/default-import.js'], temporary));

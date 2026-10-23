@@ -1,6 +1,6 @@
 {
   "name": "go-defaults",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Apply default values to missing or undefined object properties.",
   "license": "MIT",
