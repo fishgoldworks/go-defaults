@@ -49,6 +49,10 @@ apply<{
 declare const dictionary: Record<string, number>;
 // @ts-expect-error Dictionaries do not guarantee enumerable own keys exist.
 const unsafeIndex: number = withDefaults(dictionary).missing;
+// @ts-expect-error Focused ESM imports must not retain non-enumerable Symbol methods.
+directMerge(Symbol.prototype)[Symbol.toPrimitive]('default');
+// @ts-expect-error A wrapper passed to the named ESM factory does not retain BigInt.valueOf.
+const unsafeBigInt: bigint = namedFactory({ option: true })(BigInt.prototype).valueOf();
 // @ts-expect-error ESM factory creation must reject callable defaults too.
 defaultsFor(() => ({ value: 1 }));
 

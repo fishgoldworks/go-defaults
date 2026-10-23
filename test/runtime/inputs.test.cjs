@@ -154,6 +154,8 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
       [new Set(), 'has'],
       [/re/, 'exec'],
       [new Number(1), 'toFixed'],
+      [Object(Symbol('boxed')), Symbol.toPrimitive],
+      [Object(1n), Symbol.toStringTag],
       [Promise.resolve(), 'then'],
       [new ArrayBuffer(8), 'slice'],
       [new SharedArrayBuffer(8), 'slice'],
@@ -167,25 +169,32 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
       const copied = withDefaults(instance);
       assert.equal(Object.getPrototypeOf(copied), Object.prototype);
       assert.equal(Object.hasOwn(copied, inheritedKey), false);
-      assert.equal(copied[inheritedKey], undefined, `${instance.constructor.name}.${inheritedKey}`);
+      assert.equal(copied[inheritedKey], undefined, `${instance.constructor.name}.${String(inheritedKey)}`);
       const viaFactory = defaultsFor(instance)();
       assert.equal(Object.hasOwn(viaFactory, inheritedKey), false);
       assert.equal(viaFactory[inheritedKey], undefined);
     }
-    const boxed = withDefaults(new Boolean(true));
-    assert.equal(boxed.valueOf(), boxed); // Object.prototype.valueOf, not Boolean.prototype.valueOf
+    for (const instance of [Object(true), Symbol.prototype, Object(Symbol('boxed')), BigInt.prototype, Object(1n)]) {
+      const copied = withDefaults(instance);
+      assert.deepEqual(Reflect.ownKeys(copied), []);
+      assert.equal(copied.valueOf(), copied); // Object.prototype.valueOf returns the plain result object.
+      const configured = defaultsFor(instance)();
+      assert.deepEqual(Reflect.ownKeys(configured), []);
+      assert.equal(configured.valueOf(), configured);
+    }
   });
 
   test(`${label}: decorated instances still copy only eligible own data; plain records remain precise`, () => {
-    const date = new Date();
-    date.option = 7;
-    Object.defineProperty(date, 'hidden', { value: 'secret', enumerable: false });
-    const merged = withDefaults(date, { extra: true });
-    assert.deepEqual(merged, { option: 7, extra: true });
-    assert.equal(merged.getTime, undefined);
-    assert.equal(merged.hidden, undefined);
-    const byFactory = defaultsFor(date)({ option: undefined, extra: true });
-    assert.deepEqual(byFactory, { option: 7, extra: true });
+    for (const instance of [new Date(), Object(Symbol('boxed')), Object(1n)]) {
+      instance.option = 7;
+      Object.defineProperty(instance, 'hidden', { value: 'secret', enumerable: false });
+      const merged = withDefaults(instance, { extra: true });
+      assert.deepEqual(merged, { option: 7, extra: true });
+      assert.equal(merged.getTime, undefined);
+      assert.equal(merged.hidden, undefined);
+      const byFactory = defaultsFor(instance)({ option: undefined, extra: true });
+      assert.deepEqual(byFactory, { option: 7, extra: true });
+    }
     const dataMethod = () => 3;
     assert.equal(withDefaults({ getTime: dataMethod }).getTime, dataMethod);
     assert.equal(withDefaults({ getTime: dataMethod }).getTime(), 3);

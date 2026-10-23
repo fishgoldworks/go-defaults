@@ -75,6 +75,8 @@ type NativeInstance =
   | RegExp
   | Number
   | Boolean
+  | OptionalGlobalInstance<'Symbol'>
+  | OptionalGlobalInstance<'BigInt'>
   | OptionalGlobalInstance<'Map'>
   | OptionalGlobalInstance<'Set'>
   | OptionalGlobalInstance<'WeakMap'>

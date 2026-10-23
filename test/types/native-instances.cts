@@ -16,6 +16,23 @@ defaultsFor(new Set<string>())().has('x');
 withDefaults(new Number(1)).toFixed(2);
 // @ts-expect-error Boxed Boolean.valueOf returns a different type from Object.prototype.valueOf.
 withDefaults(new Boolean(true)).valueOf() as boolean;
+// Symbol and BigInt wrappers must not retain native methods after merging.
+// @ts-expect-error Symbol.toPrimitive is not copied from the wrapper prototype.
+withDefaults(Symbol.prototype)[Symbol.toPrimitive]('default');
+// @ts-expect-error A Symbol wrapper used as an override does not supply a primitive valueOf result.
+const unsafeSymbol: symbol = merge({ option: true }, Symbol.prototype).valueOf();
+// @ts-expect-error The reusable function does not copy Symbol.toPrimitive either.
+defaultsFor(Symbol.prototype)()[Symbol.toPrimitive]('default');
+// @ts-expect-error Wrapper overrides follow the same rule through the focused factory.
+const unsafeFactorySymbol: symbol = factory({ option: true })(Symbol.prototype).valueOf();
+// @ts-expect-error The result is a plain object, not a BigInt wrapper.
+const unsafeBigInt: bigint = withDefaults(BigInt.prototype).valueOf();
+// @ts-expect-error BigInt wrapper overrides do not retain the native valueOf method.
+const unsafeFocusedBigInt: bigint = merge({ option: true }, BigInt.prototype).valueOf();
+// @ts-expect-error The reusable function also produces a plain object.
+const unsafeFactoryBigInt: bigint = defaultsFor(BigInt.prototype)().valueOf();
+// @ts-expect-error The focused factory must not infer a primitive from a wrapper override.
+const unsafeFocusedFactoryBigInt: bigint = factory({ option: true })(BigInt.prototype).valueOf();
 // @ts-expect-error Promise.then is inherited, not copied.
 withDefaults(Promise.resolve(1)).then(() => 1);
 // @ts-expect-error DataView.byteLength is an inherited getter, not copied.
@@ -43,5 +60,9 @@ const numeric: string = withDefaults({ 1: 42 }, { '1': 'last' })[1];
 // Structural typing also conservatively classifies a Boolean-shaped plain object.
 // @ts-expect-error This is the deliberate type-safety trade-off for boxed Booleans.
 withDefaults({ valueOf: () => true }).valueOf();
+// Own methods on ordinary records remain callable with their inferred result types.
+const ownSymbol = Symbol('own');
+const ownSymbolResult: symbol = withDefaults({ valueOf: () => ownSymbol }).valueOf();
+const ownBigIntResult: bigint = defaultsFor({ valueOf: () => BigInt(7) })().valueOf();
 const symbol = Symbol('option');
 const symbolValue: number = merge({ [symbol]: 1 }, { [symbol]: undefined })[symbol];

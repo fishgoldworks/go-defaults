@@ -288,7 +288,7 @@ Precise inference supports tuples of up to **64 source objects**, including the 
 
 In a conservative result, built-in property names such as `toString`, `valueOf` and `constructor` are explicitly `unknown` too: an input may replace them with a non-function. Template-pattern index signatures, even when combined with fixed keys, use the same dictionary fallback. Finite template expansions retain their known keys.
 
-Known native instance types, including `Date`, `Map`, `Set`, `RegExp`, boxed numbers and booleans, promises and binary-buffer views, also produce conservative results. Their typed methods are generally inherited and are not copied, but instances can have extra own enumerable properties. Neither the full instance type nor an empty result type would describe that reliably.
+Known native instance types, including `Date`, `Map`, `Set`, `RegExp`, primitive wrappers, promises and binary-buffer views, also produce conservative results. Their typed methods are generally inherited and are not copied, but instances can have extra own enumerable properties. Neither the full instance type nor an empty result type would describe that reliably.
 
 TypeScript checks structure, so an ordinary object shaped like a native wrapper—for example, one with only `valueOf(): boolean`—can also receive a conservative result. The native-type checks do not require newer ambient library definitions merely to import the package.
 

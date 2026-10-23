@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Corrected result types for `Symbol` and `BigInt` wrapper inputs so native methods are not inferred as copied properties.
+
 ## 1.0.0
 
 Initial release.
