@@ -1,0 +1,22 @@
+# Dependencies and package-manager state
+node_modules/
+
+# Generated distributions and documentation
+/artifacts/
+/dist/
+/package/
+
+# Build staging and temporary files
+.tmp/
+/.go-defaults-build-*/
+temp/
+
+# Coverage and local test results
+/coverage/
+
+# Package archives
+*.tgz
+
+# Editor and operating-system files
+.DS_Store
+/nbproject/

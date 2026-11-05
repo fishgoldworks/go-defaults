@@ -1,0 +1,66 @@
+{
+  "name": "go-defaults",
+  "version": "1.0.1",
+  "private": true,
+  "description": "Apply default values to missing or undefined object properties.",
+  "license": "MIT",
+  "author": "Michael Ko",
+  "keywords": [
+    "defaults",
+    "default-values",
+    "objects",
+    "shallow-merge",
+    "undefined",
+    "javascript",
+    "typescript"
+  ],
+  "homepage": "https://github.com/fishgoldworks/go-defaults",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fishgoldworks/go-defaults.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fishgoldworks/go-defaults/issues"
+  },
+  "main": "./package/dist/index.cjs",
+  "types": "./package/dist/index.d.ts",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:untransformed": "node scripts/build-untransformed.mjs",
+    "docs": "node scripts/docs.js",
+    "pack:package": "node scripts/pack-package.mjs",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix --max-warnings 0",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "test": "node scripts/test-contracts.mjs",
+    "test:docs": "node scripts/docs.js --check && node --test scripts/test-docs.js && node scripts/test-examples.js",
+    "test:types": "node scripts/test-types.mjs",
+    "test:build": "node --test scripts/test-build.mjs",
+    "test:tooling": "node --test scripts/test-tooling.mjs",
+    "test:artifacts": "node scripts/test-artifacts.mjs",
+    "test:package": "node scripts/test-package.mjs",
+    "test:browser": "node scripts/test-browser.mjs",
+    "test:contracts": "node scripts/test-contracts.mjs",
+    "coverage": "node scripts/test-contracts.mjs --coverage",
+    "verify": "node scripts/verify.mjs",
+    "verify:all": "node scripts/verify.mjs --all",
+    "benchmark": "node scripts/benchmark.mjs",
+    "prepack": "node scripts/root-package-guard.js",
+    "prepublishOnly": "node scripts/root-package-guard.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "esbuild": "0.28.2",
+    "eslint": "10.11.0",
+    "globals": "16.5.0",
+    "playwright": "1.57.0",
+    "prettier": "3.9.6",
+    "terser": "5.51.2",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.70.1"
+  },
+  "overrides": {
+    "minimatch@<11.0.1": "11.0.4"
+  }
+}
