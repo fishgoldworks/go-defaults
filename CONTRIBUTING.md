@@ -1,6 +1,6 @@
 # Contributing
 
-The package is `go-defaults`, with exactly `withDefaults` and `defaultsFor` exported from its root and focused subpaths. Implementations and tests remain JavaScript; TypeScript is limited to declarations and consumer fixtures. Preserve MIT and its copyright notice. Publication requires explicit owner authorisation.
+The package is `go-defaults`, with exactly [`withDefaults`](docs/API.md#withdefaultsdefaults-overrides) and [`defaultsFor`](docs/API.md#defaultsfordefaultvalues) exported from its root and focused subpaths. Implementations and tests remain JavaScript; TypeScript is limited to declarations and consumer fixtures. Preserve MIT and its copyright notice. Publication requires explicit owner authorisation.
 
 ## Commands
 
@@ -65,7 +65,7 @@ Build both packages, then run:
 npm run benchmark -- --baseline /path/to/baseline/package --candidate ./package --out /path/to/results.json
 ```
 
-The benchmark covers configuration layers, repeated and disjoint keys, large records, reusable defaults, symbols, prototype collisions, getters and repeated result reads. Both packages must expose `withDefaults` and `defaultsFor`; the runner does not rebuild or download a baseline. Keep results outside the library.
+The benchmark covers configuration layers, repeated and disjoint keys, large records, reusable defaults, symbols, prototype collisions, getters and repeated result reads. Both packages must expose [`withDefaults`](docs/API.md#withdefaultsdefaults-overrides) and [`defaultsFor`](docs/API.md#defaultsfordefaultvalues). Supply an already built local baseline. Keep results outside the library.
 
 Microbenchmark results do not establish application or browser performance. Getter/proxy cost and source shapes can dominate. Preserve the single-read and safe-property contracts when optimising.
 

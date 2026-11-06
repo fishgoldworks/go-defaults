@@ -21,6 +21,6 @@
 
 Initial release.
 
-- Apply default values with `withDefaults`, or create a reusable function with `defaultsFor` to apply the same defaults to multiple objects.
+- Apply default values with [`withDefaults`](docs/API.md#withdefaultsdefaults-overrides), or create a reusable function with [`defaultsFor`](docs/API.md#defaultsfordefaultvalues) to apply the same defaults to multiple objects.
 - Use CommonJS or ES module entry points, individual helper imports and TypeScript declarations.
 - Load readable or minified standalone browser bundles through the `goDefaults` global, with source maps for debugging.

@@ -21,7 +21,8 @@ const withDefaults = require('./withDefaults.cjs');
  * with the defaults applied; nested values retain their original references.
  * @throws {TypeError} The defaults are missing, `null`, `undefined` or not an object. Rejected
  * values are not coerced or invoked.
- * @throws Calls to the returned function follow the validation and error rules of `withDefaults`,
+ * @throws Calls to the returned function follow the validation and error rules of
+ * [`withDefaults`](../docs/API.md#withdefaultsdefaults-overrides),
  * including getter and proxy errors and processing arguments in order.
  * @example
  * const { defaultsFor } = require('go-defaults');

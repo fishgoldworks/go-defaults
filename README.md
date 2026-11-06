@@ -10,9 +10,9 @@
 - **Version:** [1.0.1](CHANGELOG.md)
 - **Licence:** [MIT](LICENSE.md)
 
-Use `withDefaults(defaults, ...overrides)` to combine defaults and overrides into a new object. Overrides apply from left to right: missing properties and `undefined` keep earlier values, while all other values—including `null`, `false`, `0` and empty strings—replace them. This follows the same undefined-only fallback rule as JavaScript default parameters and destructuring defaults.
+Use [`withDefaults(defaults, ...overrides)`](docs/API.md#withdefaultsdefaults-overrides) to combine defaults and overrides into a new object. Overrides apply from left to right: missing properties and `undefined` keep earlier values, while all other values—including `null`, `false`, `0` and empty strings—replace them. This follows the same undefined-only fallback rule as JavaScript default parameters and destructuring defaults.
 
-The merge is shallow: nested objects and arrays keep their original references. Use `defaultsFor(defaults)` to create a reusable function when you apply the same defaults repeatedly.
+The merge is shallow: nested objects and arrays keep their original references. Use [`defaultsFor(defaults)`](docs/API.md#defaultsfordefaultvalues) to create a reusable function when you apply the same defaults repeatedly.
 
 No runtime dependencies. TypeScript declarations included.
 
@@ -150,12 +150,12 @@ return values, errors and examples.
 
 Only own enumerable string and symbol properties are copied. Inherited and non-enumerable properties are skipped, and each eligible getter is read once. Special keys such as `__proto__` become own data properties without changing the result's prototype; see [property copying](docs/API.md#property-copying) for the complete rules and limits.
 
-`defaultsFor` reads the original defaults on each call, so edits to that object affect future results. Nested objects remain shared: changing one through a result can also change the defaults. The [shared-value example](docs/API.md#shared-nested-values) shows this distinction. Neither helper writes to its sources, but getters and proxies can have side effects or throw.
+[`defaultsFor`](docs/API.md#defaultsfordefaultvalues) reads the original defaults on each call, so edits to that object affect future results. Nested objects remain shared. See [how editing a nested result affects the defaults](docs/API.md#shared-nested-values). Neither helper writes to its sources, but getters and proxies can have side effects or throw.
 
 Input rules:
 
-- `withDefaults` and functions created by `defaultsFor` accept objects and skip `null` or `undefined` arguments.
-- `defaultsFor` requires a defaults object. Missing, `null` or `undefined` defaults throw `TypeError`.
+- [`withDefaults`](docs/API.md#withdefaultsdefaults-overrides) and functions created by [`defaultsFor`](docs/API.md#defaultsfordefaultvalues) accept objects and skip `null` or `undefined` arguments.
+- [`defaultsFor`](docs/API.md#defaultsfordefaultvalues) requires a defaults object. Missing, `null` or `undefined` defaults throw `TypeError`.
 - Primitive and function arguments throw `TypeError`. Property values may be any type, including functions.
 
 Arguments are processed in order. Side effects that occur before an error are not undone.
@@ -172,7 +172,7 @@ Named imports from function subpaths require Node16, NodeNext or Bundler resolut
 
 ## Performance
 
-Each merge visits the input objects' own keys and allocates a new result. `defaultsFor` reuses the function, but every call still reads the current defaults and applies its overrides; it does not cache a merged object.
+Each merge visits the input objects' own keys and allocates a new result. [`defaultsFor`](docs/API.md#defaultsfordefaultvalues) lets you reuse the function. Each call reads the current defaults and applies its overrides to produce a fresh result.
 
 ## Development
 

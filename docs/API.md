@@ -145,7 +145,7 @@ withDefaults({}, 123);           // => throws TypeError
 
 #### Comparison with JavaScript defaults
 
-The fallback rule matches JavaScript [default parameters](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Default_parameters) and [destructuring defaults](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring#default_value): only `undefined` uses an earlier value. The evaluation timing differs. JavaScript default expressions run only when needed; objects passed to `withDefaults` have already been evaluated, and the helper reads their eligible properties in argument order.
+The fallback rule matches JavaScript [default parameters](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Default_parameters) and [destructuring defaults](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring#default_value): only `undefined` uses an earlier value. The evaluation timing differs. JavaScript default expressions run only when needed. Objects passed to [`withDefaults`](#withdefaultsdefaults-overrides) have already been evaluated, and the helper reads their eligible properties in argument order.
 
 ---
 
@@ -155,7 +155,7 @@ Creates a reusable function that applies the same defaults to multiple objects u
 
 Pass the defaults once, then call the returned function with overrides for each object. Each call starts with the current defaults and returns a new object, so overrides from one call do not carry over to the next.
 
-The returned function accepts zero or more override objects and follows the [withDefaults rules](#withdefaultsdefaults-overrides). Overrides are applied from left to right: missing properties and `undefined` keep earlier values, while `null`, `false`, `0` and empty strings replace them. Omitting overrides makes a shallow copy of the current defaults; arguments that are `null` or `undefined` are skipped.
+The returned function accepts zero or more override objects and applies the same merge rules as [`withDefaults`](#withdefaultsdefaults-overrides). Overrides are applied from left to right: missing properties and `undefined` keep earlier values, while `null`, `false`, `0` and empty strings replace them. Omitting overrides makes a shallow copy of the current defaults; arguments that are `null` or `undefined` are skipped.
 
 The defaults are kept by reference and read when the returned function is called. Changing the original defaults therefore affects future calls.
 
@@ -170,7 +170,7 @@ The defaults are kept by reference and read when the returned function is called
 **Errors**
 
 - `TypeError` if `defaultValues` is missing, `null`, `undefined` or not an object, including a function. Rejected values are not stringified, coerced or invoked, including through callable-proxy traps.
-- Calls to the returned function can throw the [same validation, getter and proxy errors as withDefaults](#withdefaultsdefaults-overrides). Arguments are processed in order, and earlier side effects are not undone.
+- Calls to the returned function can throw the same validation, getter and proxy errors as [`withDefaults`](#withdefaultsdefaults-overrides). Arguments are processed in order, and earlier side effects are not undone.
 
 **Examples**
 
@@ -289,7 +289,7 @@ Each property's type is calculated separately, working back from the last overri
 
 ### When result properties are unknown
 
-Precise inference supports tuples of up to **64 source objects**, including the defaults passed to `defaultsFor`. Larger tuples, optional or unbounded source spreads, dictionaries with index signatures, arrays and opaque `object` inputs produce a result with unknown-valued properties. This limit affects type precision; the runtime accepts any number of source objects. Complex property types remain subject to the compiler's own limits.
+Precise inference supports tuples of up to **64 source objects**, including the defaults passed to [`defaultsFor`](#defaultsfordefaultvalues). Larger tuples, optional or unbounded source spreads, dictionaries with index signatures, arrays and opaque `object` inputs produce a result with unknown-valued properties. This limit affects type precision; the runtime accepts any number of source objects. Complex property types remain subject to the compiler's own limits.
 
 In a conservative result, built-in property names such as `toString`, `valueOf` and `constructor` are explicitly `unknown` too: an input may replace them with a non-function. Template-pattern index signatures, even when combined with fixed keys, use the same dictionary fallback. Finite template expansions retain their known keys.
 
