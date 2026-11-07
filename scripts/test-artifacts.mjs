@@ -4,12 +4,13 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import vm from 'node:vm';
-import { entries, names, packageRoot, consumerFiles, browserBundles } from './package-layout.mjs';
+import { entries, names, packageRoot, consumerFiles, browserBundles, consumerManifest } from './package-layout.mjs';
 export async function checkArtifacts(directory = packageRoot, { browser = true } = {}) {
   const manifest = JSON.parse(await readFile(path.join(directory, 'package.json'), 'utf8'));
   assert.equal(manifest.private, undefined);
   for (const field of ['scripts', 'dependencies', 'optionalDependencies', 'devDependencies', 'packageManager', 'bin'])
     assert.equal(manifest[field], undefined, 'Development field shipped: ' + field);
+  if (browser) assert.deepEqual(manifest, consumerManifest(), 'Package metadata differs from its canonical owner');
   async function checkTargets(value) {
     if (typeof value === 'string') {
       const resolved = path.resolve(directory, value);

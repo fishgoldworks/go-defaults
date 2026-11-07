@@ -5,28 +5,29 @@ const sourceOnly = !packageOnly && Boolean(process.env.GO_DEFAULTS_TEST_SOURCE_O
 const packageName = 'go-defaults';
 const packageRequire = packageOnly
   ? require
-  : require('node:module').createRequire(__dirname + '/../../package/package.json');
+  : require('node:module').createRequire(__dirname + '/../package/package.json');
 // Local checks load the build; installed checks exercise the public ESM export map.
 const importPackage = (specifier) =>
   import(
     packageOnly
       ? specifier
-      : '../../package/dist/' + (specifier === packageName ? 'index' : specifier.slice(packageName.length + 1)) + '.mjs'
+      : '../package/dist/' + (specifier === packageName ? 'index' : specifier.slice(packageName.length + 1)) + '.mjs'
   );
-const targets = require('./targets.cjs');
+const targets = require('./helpers/runtime-targets.cjs');
 const names = ['defaultsFor', 'withDefaults'];
 for (const [label, api] of targets) {
   test(`${label}: exposes only the two defaults utilities`, () => {
     assert.deepEqual(Object.keys(api).sort(), names);
   });
 }
+
 test('CommonJS and ESM retain root and focused import identities', async () => {
   if (sourceOnly) {
-    const api = require('../../src/index.cjs');
-    const esm = await import('../../src/index.mjs');
+    const api = require('../src/index.cjs');
+    const esm = await import('../src/index.mjs');
     assert.equal(esm.default, api);
     for (const name of names) {
-      const direct = await import('../../src/' + name + '.mjs');
+      const direct = await import('../src/' + name + '.mjs');
       assert.equal(direct.default, api[name]);
       assert.equal(direct[name], api[name]);
       assert.equal(esm[name], api[name]);
@@ -43,13 +44,14 @@ test('CommonJS and ESM retain root and focused import identities', async () => {
     assert.equal(direct.default, api[name]);
     assert.equal(direct[name], api[name]);
     if (!packageOnly) {
-      const source = await import('../../src/' + name + '.mjs');
-      assert.equal(source.default, require('../../src/index.cjs')[name]);
+      const source = await import('../src/' + name + '.mjs');
+      assert.equal(source.default, require('../src/index.cjs')[name]);
       assert.equal(source[name], source.default);
     }
   }
-  if (!packageOnly) assert.equal((await import('../../src/index.mjs')).default, require('../../src/index.cjs'));
+  if (!packageOnly) assert.equal((await import('../src/index.mjs')).default, require('../src/index.cjs'));
 });
+
 test('unsupported names cannot be imported as package subpaths', { skip: sourceOnly }, async () => {
   for (const name of ['unsupported']) {
     assert.throws(() => packageRequire(packageName + '/' + name), {
@@ -63,7 +65,7 @@ test('unsupported names cannot be imported as package subpaths', { skip: sourceO
 
 test('merging existing keys works without Object.hasOwn', () => {
   const withDefaults = require(
-    process.env.GO_DEFAULTS_TEST_PACKAGE_ONLY ? 'go-defaults/withDefaults' : '../../src/withDefaults.cjs'
+    process.env.GO_DEFAULTS_TEST_PACKAGE_ONLY ? 'go-defaults/withDefaults' : '../src/withDefaults.cjs'
   );
   const hasOwn = Object.hasOwn;
   try {
@@ -79,7 +81,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 for (const [label, directory] of targets.map(([label]) => [
   label,
-  label === 'source' ? path.resolve(__dirname, '../../src') : path.dirname(packageRequire.resolve(packageName))
+  label === 'source' ? path.resolve(__dirname, '../src') : path.dirname(packageRequire.resolve(packageName))
 ])) {
   test(`${label}: defaults work without JSON, timers, promises or browser globals`, () => {
     const context = vm.createContext({});

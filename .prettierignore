@@ -19,7 +19,7 @@ temp/
 # Lockfiles
 /package-lock.json
 
-# Legal text
+# Historical records and third-party material
 /LICENSE.md
 
 # Editor and operating-system files

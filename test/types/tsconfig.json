@@ -7,6 +7,6 @@
     "strict": true,
     "target": "ES2022"
   },
-  "include": ["*.cts", "*.mts", "../consumers/*.cts", "../consumers/*.mts"],
+  "include": ["*.cts", "*.mts"],
   "exclude": ["dom.mts"]
 }

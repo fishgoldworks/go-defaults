@@ -27,26 +27,21 @@ export async function checkTypes({
     await mkdir(path.join(temporary, 'node_modules'), { recursive: true });
     await cp(directory, path.join(temporary, 'node_modules/go-defaults'), { recursive: true });
     await writeFile(path.join(temporary, 'package.json'), JSON.stringify({ private: true }));
-    for (const folder of ['types', 'consumers']) {
-      const destination = path.join(temporary, 'test', folder);
-      await mkdir(destination, { recursive: true });
-      for (const entry of await readdir(path.join(root, 'test', folder), { withFileTypes: true })) {
-        if (entry.isFile())
-          await copyFile(path.join(root, 'test', folder, entry.name), path.join(destination, entry.name));
-      }
-    }
+    const fixtures = path.join(root, 'test/types');
+    const destination = path.join(temporary, 'test/types');
+    await mkdir(destination, { recursive: true });
+    const entries = await readdir(fixtures, { withFileTypes: true });
+    for (const entry of entries)
+      if (entry.isFile()) await copyFile(path.join(fixtures, entry.name), path.join(destination, entry.name));
+
     const legacy = path.join(temporary, 'legacy');
     await mkdir(legacy);
-    for (const entry of await readdir(path.join(root, 'test/types'), { withFileTypes: true })) {
+    for (const entry of entries) {
       if (entry.isFile() && entry.name.endsWith('.cts')) {
         // Only the extension changes; the assertions are shared with modern consumers.
-        await copyFile(
-          path.join(root, 'test/types', entry.name),
-          path.join(legacy, entry.name.replace(/\.cts$/, '.ts'))
-        );
+        await copyFile(path.join(fixtures, entry.name), path.join(legacy, entry.name.replace(/\.cts$/, '.ts')));
       }
     }
-    await copyFile(path.join(root, 'test/consumers/default-import.cts'), path.join(legacy, 'default-import.ts'));
     await writeFile(
       path.join(temporary, 'legacy.json'),
       JSON.stringify({
@@ -139,8 +134,8 @@ export async function checkTypes({
       for (const config of ['tsconfig.compat-es5.json', 'tsconfig.compat-es2019.json'])
         compile(['-p', 'test/types/' + config]);
       compile([
-        'test/consumers/default-import.mts',
-        'test/consumers/default-import.cts',
+        'test/types/default-import.mts',
+        'test/types/default-import.cts',
         '--strict',
         '--module',
         'NodeNext',

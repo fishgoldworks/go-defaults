@@ -2,7 +2,7 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const vm = require('node:vm');
-const targets = require('./targets.cjs');
+const targets = require('./helpers/runtime-targets.cjs');
 
 for (const [label, { withDefaults, defaultsFor }] of targets) {
   const check = (name, body) => test(label + ': ' + name, body);

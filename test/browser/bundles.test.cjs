@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const { test } = require('node:test');
-const checkBrowserContract = require('../consumers/browser-contract.cjs');
+const checkBrowserContract = require('./browser-contract.cjs');
 const directory = process.env.GO_DEFAULTS_TEST_PACKAGE_ONLY
   ? path.dirname(require.resolve('go-defaults'))
   : path.resolve(__dirname, '../../package/dist');

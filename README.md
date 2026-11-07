@@ -91,6 +91,8 @@ applyDefaults({ visible: false });                 // => { title: 'Home', visibl
 
 ### Function subpaths
 
+Import [`withDefaults`](docs/API.md#withdefaultsdefaults-overrides) or [`defaultsFor`](docs/API.md#defaultsfordefaultvalues) directly when you want a focused import.
+
 <!-- prettier-ignore -->
 ```javascript
 import withDefaults from 'go-defaults/withDefaults';

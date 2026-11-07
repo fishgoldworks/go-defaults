@@ -5,7 +5,7 @@ import { run } from './process.mjs';
 
 export function checkBrowser(directory = packageRoot) {
   process.stdout.write(
-    run(process.execPath, ['--test', 'test/consumers/browser.test.cjs'], root, {
+    run(process.execPath, ['--test', 'test/browser/browser.test.cjs'], root, {
       ...process.env,
       GO_DEFAULTS_BROWSER_PACKAGE: path.resolve(directory)
     })

@@ -4,6 +4,6 @@
     "lib": ["ES2022"],
     "types": []
   },
-  "include": ["*.cts", "*.mts", "../consumers/*.cts", "../consumers/*.mts"],
+  "include": ["*.cts", "*.mts"],
   "exclude": ["dom.mts"]
 }

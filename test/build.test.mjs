@@ -5,6 +5,7 @@ import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
+import { comparePackage } from '../scripts/candidate.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 async function fixture(t) {
   const directory = await mkdtemp(path.join(os.tmpdir(), 'go-defaults-build-test-'));
@@ -32,6 +33,7 @@ for (const [name, source] of [
     assert.ok(!(await readdir(directory)).some((file) => file.startsWith('.go-defaults-build-')));
   });
 }
+
 test('a successful build removes stale entries and creates a self-contained package', async (t) => {
   const directory = await fixture(t);
   await mkdir(path.join(directory, 'package'));
@@ -51,6 +53,17 @@ test('a successful build removes stale entries and creates a self-contained pack
   assert.equal(runtime.status, 0, runtime.stderr);
 });
 
+test('the normal build produces the same package bytes from separate staging paths', async (t) => {
+  const first = await fixture(t);
+  const second = await fixture(t);
+  for (const directory of [first, second]) {
+    const result = spawnSync(process.execPath, ['scripts/build.mjs'], { cwd: directory, encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+  }
+
+  await comparePackage(path.join(first, 'package'), path.join(second, 'package'));
+});
+
 test('explicit source-copy diagnostic build replaces stale entries without substituting the normal build', async (t) => {
   const directory = await fixture(t);
   await mkdir(path.join(directory, 'package'));
@@ -66,6 +79,7 @@ test('explicit source-copy diagnostic build replaces stale entries without subst
   await access(path.join(directory, 'package/dist/index.cjs.map'));
   assert.ok(!(await readdir(directory)).some((entry) => entry.startsWith('.go-defaults-build-')));
 });
+
 test('failed source-copy candidate import preserves the previous complete package', async (t) => {
   const directory = await fixture(t);
   await mkdir(path.join(directory, 'package'));
@@ -80,6 +94,7 @@ test('failed source-copy candidate import preserves the previous complete packag
   assert.equal(await readFile(path.join(directory, 'package/previous.txt'), 'utf8'), 'previous output');
   assert.ok(!(await readdir(directory)).some((entry) => entry.startsWith('.go-defaults-build-')));
 });
+
 for (const expression of ['undefined', 'null', 'false', '0', "''"]) {
   test('a falsy import failure preserves its exact value: ' + expression, async (t) => {
     const directory = await fixture(t);
@@ -99,6 +114,7 @@ for (const expression of ['undefined', 'null', 'false', '0', "''"]) {
     assert.ok(!(await readdir(directory)).some((name) => name.startsWith('.go-defaults-build-')));
   });
 }
+
 test('cleanup failure retains a null import failure and the cleanup error', async (t) => {
   const directory = await fixture(t);
   await mkdir(path.join(directory, 'package'));

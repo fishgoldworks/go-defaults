@@ -16,7 +16,9 @@ export async function buildBrowserBundles(directory) {
   var exports = module.exports;`;
   const readable = path.join(directory, 'dist', browserBundles[0]);
   await build({
-    entryPoints: [path.join(directory, 'src/index.cjs')],
+    // Keep the random staging directory out of esbuild's source labels.
+    absWorkingDir: directory,
+    entryPoints: ['src/index.cjs'],
     outfile: readable,
     bundle: true,
     format: 'cjs',

@@ -4,7 +4,7 @@ on: [push, pull_request]
 permissions:
   contents: read
 jobs:
-  verify:
+  candidate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -12,17 +12,21 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: '24.20.0'
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npx --no-install playwright install --with-deps chromium firefox webkit
       - run: npm run verify:all
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: release-candidate
-          path: artifacts/*
-  consumer:
-    needs: verify
+          path: |
+            artifacts/*.tgz
+            artifacts/*.tgz.sha256
+          if-no-files-found: error
+
+  consumers:
+    needs: candidate
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -33,27 +37,21 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: '24.20.0'
+          node-version: ${{ matrix.node }}
+      - name: Record the selected consumer runtime
+        run: echo "CONSUMER_NODE=$(command -v node)" >> "$GITHUB_ENV"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: release-candidate
           path: artifacts
-      - name: Install exactly the verified candidate
-        run: |
-          archive=$(find artifacts -name '*.tgz')
-          echo "$(cat "$archive.sha256")  $archive" | sha256sum --check
-          mkdir consumer
-          npm install --prefix consumer --ignore-scripts --no-audit --no-fund "$PWD/$archive"
-          cp test/consumers/consumer.cjs test/consumers/consumer.mjs consumer/
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: ${{ matrix.node }}
-      - run: node consumer/consumer.cjs
-      - if: matrix.node != '8.0.0' && matrix.node != '13.0.0'
-        run: node consumer/consumer.mjs
+      - name: Check the exact archive on the selected runtime
+        run: npm run test:runtime -- --tarball "artifacts/go-defaults-$(node -p 'require("./package.json").version').tgz" --node "$CONSUMER_NODE"
 
-  typescript:
-    needs: verify
+  typescript-compatibility:
+    needs: candidate
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -69,7 +67,7 @@ jobs:
         run: echo "GO_DEFAULTS_NODE8=$(command -v node)" >> "$GITHUB_ENV"
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: '24.20.0'
+          node-version-file: .nvmrc
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: release-candidate

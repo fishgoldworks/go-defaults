@@ -1,7 +1,7 @@
 'use strict';
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
-const targets = require('./targets.cjs');
+const targets = require('./helpers/runtime-targets.cjs');
 const data = (value) => ({ __proto__: null, value, writable: true, enumerable: true, configurable: true });
 
 // Deliberately simple oracle: no production fast path and no shared mutable state.

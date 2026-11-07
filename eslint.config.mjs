@@ -24,7 +24,7 @@ export default [
   },
   { files: ['**/*.{js,cjs}'], languageOptions: { sourceType: 'commonjs' } },
   ...tseslint.configs.recommended.map((config) => ({ ...config, files: ['**/*.{ts,cts,mts}'] })),
-  { files: ['test/consumers/browser.test.cjs'], languageOptions: { globals: globals.browser } },
+  { files: ['test/browser/browser.test.cjs'], languageOptions: { globals: globals.browser } },
   // CommonJS declaration imports preserve exact runtime function identities.
   {
     files: ['**/*.{ts,cts,mts}'],

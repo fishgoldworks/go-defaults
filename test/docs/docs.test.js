@@ -5,9 +5,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 const { spawnSync } = require('node:child_process');
-const render = require('./docs.js');
+const render = require('../../scripts/docs.js');
 test('repository follows the shared documentation conventions', () => {
-  require('./lib/check-library-readme.cjs').checkRepository(path.resolve(__dirname, '..'));
+  require('../../scripts/lib/check-library-readme.cjs').checkRepository(path.resolve(__dirname, '../..'));
 });
 
 const q = String.fromCharCode(96),
@@ -34,7 +34,7 @@ test('both documents are generated and checked without writes, including cross-d
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'go-defaults-docs-test-'));
   try {
     fs.mkdirSync(path.join(root, 'scripts'));
-    fs.copyFileSync(path.join(__dirname, 'docs.js'), path.join(root, 'scripts/docs.js'));
+    fs.copyFileSync(path.join(__dirname, '../../scripts/docs.js'), path.join(root, 'scripts/docs.js'));
     fs.writeFileSync(
       path.join(root, 'package.json'),
       JSON.stringify({
@@ -82,6 +82,7 @@ test('both documents are generated and checked without writes, including cross-d
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
+
 test('API coverage requires complete entries, not just summary rows', () => {
   const api = { example: () => 1 };
   const current = reference.replace('{{TOC}}', '');
@@ -97,6 +98,7 @@ test('API coverage requires complete entries, not just summary rows', () => {
   );
   assert.match(render.summary(generic, api), /docs\/API\.md#examplevaluevalue/);
 });
+
 test('headings ignore fenced examples and disambiguate repeated names', () => {
   assert.deepEqual(
     render
@@ -107,8 +109,8 @@ test('headings ignore fenced examples and disambiguate repeated names', () => {
 });
 
 test('result examples reject wrong values, thrown errors and promise rejections', () => {
-  const { runExample, instrument } = require('./test-examples.js');
-  const root = path.resolve(__dirname, '..');
+  const { runExample, instrument } = require('../../scripts/test-examples.js');
+  const root = path.resolve(__dirname, '../..');
   const example = {
     name: 'instrumentation probe',
     language: 'javascript',
@@ -151,7 +153,7 @@ test('result examples reject wrong values, thrown errors and promise rejections'
 
 test('source JSDoc references resolve to exported declaration types', () => {
   const ts = require('typescript'),
-    root = path.resolve(__dirname, '..');
+    root = path.resolve(__dirname, '../..');
   const files = fs
     .readdirSync(path.join(root, 'src'))
     .filter((file) => file.endsWith('.cjs'))
@@ -179,13 +181,14 @@ test('source JSDoc references resolve to exported declaration types', () => {
   }
   assert.deepEqual(problems, []);
 });
+
 test('the TypeScript example checker detects a false compile-time rejection', () => {
   const example = {
     language: 'typescript',
     code: "import { withDefaults } from 'go-defaults';\n// withDefaults({}); // TypeScript error: deliberately false claim"
   };
   assert.throws(
-    () => require('./test-examples.js').checkTypes(path.resolve(__dirname, '..'), [example]),
+    () => require('../../scripts/test-examples.js').checkTypes(path.resolve(__dirname, '../..'), [example]),
     /Unused '@ts-expect-error'/
   );
 });

@@ -1,10 +1,15 @@
 import path from 'node:path';
-import { root } from './package-layout.mjs';
+import { parseArgs } from 'node:util';
+import { root, packageRoot } from './package-layout.mjs';
 import { npm } from './process.mjs';
 import { packPackage } from './pack-package.mjs';
-const all = process.argv.length === 3 && process.argv[2] === '--all';
-if (process.argv.length > 2 && !all) throw new Error('Usage: node scripts/verify.mjs [--all]');
+import { readCandidate, assertCandidateUnchanged } from './candidate.mjs';
+
+const { values } = parseArgs({ options: { all: { type: 'boolean' }, tarball: { type: 'string' } } });
+const supplied = values.tarball !== undefined ? await readCandidate(values.tarball) : undefined;
 for (const script of [
+  'lint',
+  'format:check',
   'build',
   'test:docs',
   'coverage',
@@ -12,10 +17,26 @@ for (const script of [
   'test:build',
   'test:tooling',
   'test:artifacts',
-  'lint',
-  'format:check'
+  'test:release'
 ]) {
   process.stdout.write(npm(['run', script], root));
 }
-const { tarball } = await packPackage(path.join(root, 'artifacts'));
-process.stdout.write(npm(['run', 'test:package', '--', '--tarball', tarball, ...(all ? ['--browser'] : [])], root));
+const candidate = supplied ?? (await packPackage(path.join(root, 'artifacts')));
+await assertCandidateUnchanged(candidate);
+process.stdout.write(
+  npm(
+    [
+      'run',
+      'test:package',
+      '--',
+      '--tarball',
+      candidate.tarball,
+      '--compare-package',
+      packageRoot,
+      ...(values.all ? ['--browser'] : [])
+    ],
+    root
+  )
+);
+await assertCandidateUnchanged(candidate);
+console.log('Verified release candidate: ' + candidate.tarball + '\nSHA-256: ' + candidate.sha256);
