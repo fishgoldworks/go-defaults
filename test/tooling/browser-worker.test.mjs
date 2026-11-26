@@ -5,7 +5,7 @@ import os from 'node:os';
 import { test } from 'node:test';
 import { setTimeout as delay } from 'node:timers/promises';
 import { createRequire } from 'node:module';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 const require = createRequire(import.meta.url);
 const { processIdentity } = require('../../scripts/browser-processes.cjs');
 
@@ -38,6 +38,37 @@ test('browser worker preserves arguments, output and nonzero failures', async ()
     (error) => error.message.includes('7') && error.stdout === 'before failure'
   );
 });
+
+test(
+  'browser worker skips a protected process that predates its supervisor',
+  { skip: process.platform !== 'linux' },
+  async () => {
+    const module = new URL('../../scripts/browser-worker.mjs', import.meta.url).href;
+    const source = `
+    import fs from 'node:fs';
+    const readFile = fs.readFileSync;
+    fs.readFileSync = function (file, ...args) {
+      if (file === '/proc/' + process.ppid + '/environ') {
+        throw Object.assign(new Error('fixture process environment is protected'), { code: 'EACCES' });
+      }
+      return Reflect.apply(readFile, this, [file, ...args]);
+    };
+    const { runBrowserWorker } = await import(${JSON.stringify(module)});
+    const result = await runBrowserWorker(['-e', 'process.stdout.write("complete")'], { timeoutMs: 15000 });
+    process.stdout.write(result.stdout);
+  `;
+
+    await delay(50);
+    const result = spawnSync(process.execPath, ['--input-type=module', '--eval', source], {
+      encoding: 'utf8',
+      timeout: 20000
+    });
+
+    if (result.error) throw result.error;
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, 'complete');
+  }
+);
 
 test('browser worker deadline retains partial output and stops detached descendants', async (t) => {
   const { runBrowserWorker } = await import('../../scripts/browser-worker.mjs');

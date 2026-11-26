@@ -127,6 +127,7 @@ function stopUnixTree(pid, registry, owner) {
 
   try {
     const linux = process.platform === 'linux';
+    const supervisorStart = linux ? BigInt(processIdentity(process.pid, remaining())) : undefined;
     // One bounded snapshot on other Unix systems also includes inherited
     // environment markers, so native children remain discoverable after reparenting.
     const snapshot = spawnSync(
@@ -170,6 +171,9 @@ function stopUnixTree(pid, registry, owner) {
           // environments need not be readable by this contributor account.
           if (!uid || ![Number(uid[1]), Number(uid[2])].includes(process.getuid())) continue;
           identity = processIdentity(id, remaining());
+          // Processes that predate the supervisor cannot inherit its worker marker.
+          if (identity === undefined || BigInt(identity) < supervisorStart) continue;
+
           marked = syncFs
             .readFileSync('/proc/' + id + '/environ', 'utf8')
             .split('\0')
