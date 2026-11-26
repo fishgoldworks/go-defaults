@@ -2,12 +2,14 @@ import * as fs from 'node:fs/promises';
 export async function replaceDirectory(staged, destination, operations = fs) {
   const previous = staged + '-previous';
   let hadPrevious = false;
+
   try {
     await operations.rename(destination, previous);
     hadPrevious = true;
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
   }
+
   try {
     await operations.rename(staged, destination);
   } catch (error) {
@@ -22,8 +24,10 @@ export async function replaceDirectory(staged, destination, operations = fs) {
         );
       }
     }
+
     throw error;
   }
+
   if (hadPrevious) {
     try {
       await operations.rm(previous, { recursive: true, force: true });
@@ -35,6 +39,7 @@ export async function replaceDirectory(staged, destination, operations = fs) {
         '; previous-output cleanup failed. Backup may remain or be incomplete at ' +
         previous;
       const committedError = new Error(message, { cause: error });
+
       committedError.committed = true;
       committedError.destination = destination;
       committedError.previousBackup = previous;

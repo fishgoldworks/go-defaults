@@ -1,4 +1,4 @@
-/** Internal declarations shared by the two default-merging helpers. */
+/** Internal declarations shared by the object defaults helpers. */
 export type MergeSource = object | null | undefined;
 
 // Unknown inputs may overwrite built-in or consumer-added Object members.
@@ -14,42 +14,45 @@ interface UnknownRecord extends Record<keyof Object, unknown> {
 type OpenKey<Key extends PropertyKey> = Key extends unknown ? ({} extends Record<Key, never> ? true : false) : never;
 type IsAny<Value> = 0 extends 1 & Value ? true : false;
 
-// TypeScript's object constraint includes functions. Reject known callable or
-// constructable branches without changing ordinary record inference. Broad object
+// TypeScript's object constraint includes functions and branded primitives.
+// Reject known invalid branches without changing ordinary record inference. Broad object
 // and any inputs still need runtime validation; any in one layer must not mask
-// a known function in a different layer.
+// a known invalid value in a different layer.
 // Explicit signatures also catch functions that overwrite Function members such
 // as call, apply or bind with incompatible property types.
 type FunctionSource = Function | ((...args: never[]) => unknown) | (abstract new (...args: never[]) => unknown);
 
-export type NonFunctionSource<Source> = unknown extends Source
+type InvalidSource = string | number | boolean | bigint | symbol | FunctionSource;
+
+// Intersection guards preserve accepted inputs and reject known invalid sources with never.
+export type SourceGuard<Source> = unknown extends Source
   ? unknown
-  : [Extract<Source, FunctionSource>] extends [never]
+  : [Extract<Source, InvalidSource>] extends [never]
     ? unknown
     : never;
 
 // Collect invalid members before deciding whether the entire argument list is
 // valid. Returning per-position unknown guards would let a valid tuple branch
-// mask a function in another branch of an equal-length tuple union.
+// mask an invalid value in another branch of an equal-length tuple union.
 // Preserve known leading/trailing layers around an unbounded spread. Older
 // compilers can lose those positions when a mapped tuple is indexed by number.
-type InvalidFunction<Source> = unknown extends Source ? never : Extract<Source, FunctionSource>;
+type InvalidMember<Source> = unknown extends Source ? never : Extract<Source, InvalidSource>;
 // Accumulate invalid members so long tuples can use tail-recursion elimination.
-type DynamicFunctionLayers<Sources extends readonly MergeSource[], Invalid = never> = Sources extends readonly [
+type DynamicInvalidSources<Sources extends readonly MergeSource[], Invalid = never> = Sources extends readonly [
   ...infer Rest,
   infer Last
 ]
-  ? DynamicFunctionLayers<Extract<Rest, readonly MergeSource[]>, Invalid | InvalidFunction<Last>>
+  ? DynamicInvalidSources<Extract<Rest, readonly MergeSource[]>, Invalid | InvalidMember<Last>>
   : Sources extends readonly [infer First, ...infer Rest]
-    ? DynamicFunctionLayers<Extract<Rest, readonly MergeSource[]>, Invalid | InvalidFunction<First>>
-    : Invalid | InvalidFunction<Sources[number]>;
-type FunctionLayers<Sources extends readonly MergeSource[]> = number extends Sources['length']
-  ? DynamicFunctionLayers<Sources>
+    ? DynamicInvalidSources<Extract<Rest, readonly MergeSource[]>, Invalid | InvalidMember<First>>
+    : Invalid | InvalidMember<Sources[number]>;
+type InvalidSources<Sources extends readonly MergeSource[]> = number extends Sources['length']
+  ? DynamicInvalidSources<Sources>
   : {
-      [Index in keyof Sources]-?: unknown extends Sources[Index] ? never : Extract<Sources[Index], FunctionSource>;
+      [Index in keyof Sources]-?: InvalidMember<Sources[Index]>;
     }[number];
 
-export type NonFunctionSources<Sources extends readonly MergeSource[]> = [FunctionLayers<Sources>] extends [never]
+export type SourceGuards<Sources extends readonly MergeSource[]> = [InvalidSources<Sources>] extends [never]
   ? unknown
   : never;
 
@@ -124,9 +127,11 @@ type NormalizeSources<Sources extends readonly MergeSource[]> = {
   [Index in keyof Sources]: Normalized<Sources[Index]>;
 };
 type KeysOfUnion<Value> = Value extends unknown ? keyof Value : never;
-type DefinedAt<Source, Key extends PropertyKey> = Source extends unknown
+type ValueAt<Source, Key extends PropertyKey, AllowUndefined extends boolean = false> = Source extends unknown
   ? Key extends keyof Source
-    ? Exclude<Source[Key], undefined>
+    ? AllowUndefined extends true
+      ? Source[Key]
+      : Exclude<Source[Key], undefined>
     : never
   : never;
 
@@ -159,12 +164,23 @@ type PropertyState<
   Value = never
 > = Sources extends readonly [...infer Rest, infer Last]
   ? true extends MaySkip<Last, Key>
-    ? PropertyState<Rest, Key, Value | DefinedAt<Last, Key>>
-    : [Value | DefinedAt<Last, Key>, true]
+    ? PropertyState<Rest, Key, Value | ValueAt<Last, Key>>
+    : [Value | ValueAt<Last, Key>, true]
   : MissingState<Key, Value>;
 
-type PropertyStates<Sources extends readonly unknown[]> = {
-  [Key in KeysOfUnion<Sources[number]>]: PropertyState<Sources, Key>;
+// With a custom rule, only the defaults can guarantee a property is present.
+// An accepted override can supply any of its values, including undefined.
+type FilteredPropertyState<Sources extends readonly unknown[], Key extends PropertyKey> = Sources extends readonly [
+  infer Defaults,
+  ...infer Overrides
+]
+  ? PropertyState<[Defaults], Key, ValueAt<Overrides[number], Key, true>>
+  : PropertyState<Sources, Key>;
+
+type PropertyStates<Sources extends readonly unknown[], CustomRule extends boolean> = {
+  [Key in KeysOfUnion<Sources[number]>]: CustomRule extends true
+    ? FilteredPropertyState<Sources, Key>
+    : PropertyState<Sources, Key>;
 };
 type Simplify<Value> = { [Key in keyof Value]: Value[Key] };
 type FromStates<States extends Record<PropertyKey, [unknown, boolean]>> = Simplify<
@@ -191,16 +207,24 @@ type WithinBudget<Sources extends readonly unknown[], Count extends unknown[] = 
         ? WithinBudget<Rest, [...Count, unknown]>
         : false;
 
-type MergeNormalized<Sources extends readonly unknown[], Keys = KeysOfUnion<Sources[number]>> = string extends Keys
+type MergeNormalized<
+  Sources extends readonly unknown[],
+  CustomRule extends boolean = false,
+  Keys = KeysOfUnion<Sources[number]>
+> = string extends Keys
   ? UnknownRecord
   : number extends Keys
     ? UnknownRecord
     : symbol extends Keys
       ? UnknownRecord
-      : FromStates<PropertyStates<Sources>>;
+      : FromStates<PropertyStates<Sources, CustomRule>>;
 
 // resolve each property against the original source tuple once. Avoid
 // recursively feeding nested, computed object types into another merge.
 export type Merged<Sources extends readonly MergeSource[]> = [WithinBudget<Sources>] extends [true]
   ? MergeNormalized<NormalizeSources<Sources>>
+  : UnknownRecord;
+
+export type MergedWithFilteredOverrides<Sources extends readonly MergeSource[]> = [WithinBudget<Sources>] extends [true]
+  ? MergeNormalized<NormalizeSources<Sources>, true>
   : UnknownRecord;

@@ -4,14 +4,16 @@ const path = require('node:path');
 const { parseArgs } = require('node:util');
 
 async function runConsumer(directory, executable, mode) {
-  const { run } = await import('./process.mjs');
+  const { runConsumerCheck } = await import('./consumer-check.mjs');
   const file = 'consumer.' + mode;
+
   await copyFile(path.join(__dirname, '../test/package', file), path.join(directory, file));
-  process.stdout.write(run(executable, [file], directory));
+  process.stdout.write(await runConsumerCheck(executable, [file], directory, mode));
 }
 
 async function main() {
   const { values } = parseArgs({ options: { tarball: { type: 'string' }, node: { type: 'string' } } });
+
   if (!values.tarball || !values.node)
     throw new Error('Usage: npm run test:runtime -- --tarball <candidate.tgz> --node <node-executable>');
 
@@ -21,6 +23,7 @@ async function main() {
   const executable = path.resolve(values.node);
   const version = run(executable, ['--version'], process.cwd()).trim();
   const parts = /^v(\d+)\.(\d+)\.\d+$/.exec(version);
+
   assert.ok(parts && Number(parts[1]) >= 8, 'Expected a supported Node.js runtime, received ' + version);
   const [, major, minor] = parts.map(Number);
 

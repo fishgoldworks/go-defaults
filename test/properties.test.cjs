@@ -1,14 +1,17 @@
 'use strict';
+
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const vm = require('node:vm');
 const targets = require('./helpers/runtime-targets.cjs');
 
-for (const [label, { withDefaults, defaultsFor }] of targets) {
+for (const [label, { withDefaults, createDefaultsMerger }] of targets) {
   const check = (name, body) => test(label + ': ' + name, body);
+
   check('copies __proto__ as an own data property without changing the output prototype', () => {
     const source = JSON.parse('{"__proto__":{"isAdmin":true}}');
     const merged = withDefaults({ theme: 'light' }, source);
+
     assert.equal(Object.getPrototypeOf(merged), Object.prototype);
     assert.equal(merged.isAdmin, undefined);
     assert.equal(Object.hasOwn(merged, '__proto__'), true);
@@ -21,10 +24,11 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
     assert.equal({}.isAdmin, undefined);
   });
 
-  check('defaultsFor also uses prototype-safe writes', () => {
+  check('the defaults factory also uses prototype-safe writes', () => {
     const defaults = JSON.parse('{"__proto__":{"unexpected":true},"a":1}');
     const values = JSON.parse('{"__proto__":null,"constructor":"data","prototype":4}');
-    const merged = defaultsFor(defaults)(values);
+    const merged = createDefaultsMerger()(defaults, values);
+
     assert.equal(Object.getPrototypeOf(merged), Object.prototype);
     assert.equal(merged.unexpected, undefined);
     assert.equal(Object.hasOwn(merged, '__proto__'), true);
@@ -43,6 +47,7 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
         }
       }
     );
+
     assert.equal(reads, 1);
     assert.deepEqual(merged, { enabled: true });
   });
@@ -54,10 +59,12 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
       {
         get enabled() {
           reads += 1;
+
           return undefined;
         }
       }
     );
+
     assert.equal(reads, 1);
     assert.equal(merged.enabled, false);
   });
@@ -66,16 +73,18 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
     const key = Symbol('option');
     const extra = Symbol('extra');
     const result = withDefaults({ [key]: 1 }, { [key]: undefined, [extra]: 2 });
+
     assert.equal(result[key], 1);
     assert.equal(result[extra], 2);
     assert.equal(withDefaults(result, { [key]: null })[key], null);
     assert.equal(withDefaults(result, { [key]: 3 })[key], 3);
-    assert.equal(defaultsFor({ [key]: 1 })({ [key]: 4 })[key], 4);
+    assert.equal(createDefaultsMerger()({ [key]: 1 }, { [key]: 4 })[key], 4);
   });
 
   check('skips inherited and non-enumerable properties without evaluating their getters', () => {
     const symbol = Symbol('hidden');
     const input = Object.create({ inherited: 1 });
+
     Object.defineProperty(input, 'hidden', {
       get() {
         return assert.fail('hidden getter');
@@ -96,10 +105,12 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
     const input = {
       get [symbol]() {
         reads += 1;
+
         return 5;
       }
     };
     const merged = withDefaults(input);
+
     assert.equal(reads, 1);
     assert.equal(merged[symbol], 5);
   });
@@ -110,11 +121,13 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
         delete this.removed;
         Object.defineProperty(this, 'hidden', { enumerable: false });
         this.added = 4;
+
         return 1;
       },
       removed: 2,
       hidden: 3
     };
+
     assert.deepEqual(withDefaults(input), { first: 1 });
   });
 
@@ -125,6 +138,7 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
       }
     });
     const merged = withDefaults(input);
+
     assert.deepEqual(Object.getOwnPropertyDescriptor(merged, 'value'), {
       value: 3,
       writable: true,
@@ -137,10 +151,12 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
 
   check('retains null-prototype inputs and shadowed hasOwnProperty support', () => {
     const input = Object.create(null);
+
     input.hasOwnProperty = false;
     input.a = 1;
     input.missing = undefined;
     const merged = withDefaults(input);
+
     assert.equal(Object.getPrototypeOf(merged), Object.prototype);
     assert.deepEqual(merged, { hasOwnProperty: false, a: 1 });
   });
@@ -157,11 +173,14 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
       '__proto__'
     ]) {
       const source = { [key]: undefined };
-      for (const merged of [withDefaults(source), defaultsFor(source)()]) {
+
+      for (const merged of [withDefaults(source), createDefaultsMerger()(source)]) {
         assert.equal(Object.hasOwn(merged, key), false);
         assert.equal(merged[key], {}[key]);
       }
+
       const merged = withDefaults({ [key]: 'copied' }, source);
+
       assert.equal(Object.hasOwn(merged, key), true);
       assert.equal(merged[key], 'copied');
     }
@@ -170,7 +189,8 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
   check('all standard prototype names may be overridden by non-functions', () => {
     const keys = Object.getOwnPropertyNames(Object.prototype);
     const source = Object.fromEntries(keys.map((key) => [key, 42]));
-    for (const merged of [withDefaults(source), defaultsFor(source)()]) {
+
+    for (const merged of [withDefaults(source), createDefaultsMerger()(source)]) {
       assert.equal(Object.getPrototypeOf(merged), Object.prototype);
       for (const key of keys) {
         assert.equal(Object.hasOwn(merged, key), true);
@@ -190,9 +210,10 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
     })()`);
     const symbol = Symbol('foreign addition');
     const expected = { 1: 'own', nested: foreign.nested, own: 3, [symbol]: null };
+
     for (const value of [
       withDefaults(foreign.sparse, foreign.source, { [symbol]: null }),
-      defaultsFor(foreign.sparse)(foreign.source, { [symbol]: null })
+      createDefaultsMerger()(foreign.sparse, foreign.source, { [symbol]: null })
     ]) {
       assert.equal(Object.getPrototypeOf(value), Object.prototype);
       assert.deepEqual(Reflect.ownKeys(value), ['1', 'nested', 'own', symbol]);
@@ -221,14 +242,17 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
             writes += 1;
           }
         });
+
         return 7;
       }
     };
+
     try {
       output = withDefaults(source);
     } finally {
       delete Object.prototype[key];
     }
+
     assert.equal(writes, 0);
     assert.equal(output[key], 7);
     assert.equal(Object.hasOwn(output, key), true);
@@ -247,14 +271,17 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
             writes += 1;
           }
         });
+
         return 9;
       }
     };
+
     try {
       output = withDefaults({ [key]: 1 }, overrides);
     } finally {
       delete Object.prototype[key];
     }
+
     assert.equal(output[key], 9);
     assert.equal(writes, 0);
     assert.equal(Object.getOwnPropertyDescriptor(output, key).writable, true);
@@ -263,6 +290,7 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
   check('inherited non-writable and throwing-accessor properties are shadowed safely', () => {
     const keys = [Symbol('readonly'), Symbol('throwing getter')];
     let output;
+
     Object.defineProperty(Object.prototype, keys[0], { __proto__: null, value: -1, configurable: true });
     Object.defineProperty(Object.prototype, keys[1], {
       __proto__: null,
@@ -276,10 +304,12 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
     } finally {
       for (const key of keys) delete Object.prototype[key];
     }
+
     assert.equal(output[keys[0]], 3);
     assert.equal(output[keys[1]], 4);
     for (const key of keys) {
       const descriptor = Object.getOwnPropertyDescriptor(output, key);
+
       assert.equal(descriptor.writable, true);
       assert.equal(descriptor.enumerable, true);
       assert.equal(descriptor.configurable, true);
@@ -291,6 +321,7 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
     const setDescriptor = Object.getOwnPropertyDescriptor(Object.prototype, 'set');
     const source = JSON.parse('{"__proto__":1,"toString":2}');
     let output;
+
     try {
       Object.defineProperty(Object.prototype, 'get', {
         __proto__: null,
@@ -313,6 +344,7 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
       if (getDescriptor) Object.defineProperty(Object.prototype, 'get', getDescriptor);
       if (setDescriptor) Object.defineProperty(Object.prototype, 'set', setDescriptor);
     }
+
     assert.equal(Object.getPrototypeOf(output), Object.prototype);
     assert.equal(output.__proto__, 1);
     assert.equal(output.toString, 2);
@@ -330,16 +362,19 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
             throw Error('late descriptor pollution');
           }
         });
+
         return 2;
       }
     };
     let output;
+
     try {
       output = withDefaults(source);
     } finally {
       delete Object.prototype.get;
       if (previous) Object.defineProperty(Object.prototype, 'get', previous);
     }
+
     assert.equal(output.constructor, 1);
     assert.equal(output.toString, 2);
     assert.equal(Object.getPrototypeOf(output), Object.prototype);

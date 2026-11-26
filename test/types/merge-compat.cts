@@ -1,3 +1,3 @@
-import { withDefaults, defaultsFor } from 'go-defaults';
+import { withDefaults, createDefaultsMerger } from 'go-defaults';
 const result: number = withDefaults({ retries: 2 }).retries;
-const other: string = defaultsFor({ mode: 'fast' })().mode;
+const other: string = createDefaultsMerger()({ mode: 'fast' }).mode;

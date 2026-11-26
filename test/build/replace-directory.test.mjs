@@ -7,7 +7,9 @@ import { replaceDirectory } from '../../scripts/replace-directory.mjs';
 
 async function temporary(t) {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'go-defaults-recovery-'));
+
   t.after(() => fs.rm(directory, { recursive: true, force: true }));
+
   return directory;
 }
 
@@ -20,6 +22,7 @@ for (const rollbackFails of [false, true]) {
       const directory = await temporary(t);
       const staged = path.join(directory, 'staged');
       const destination = path.join(directory, 'package');
+
       await fs.mkdir(staged);
       await fs.mkdir(destination);
       await fs.writeFile(path.join(destination, 'marker'), 'previous');
@@ -30,13 +33,19 @@ for (const rollbackFails of [false, true]) {
         rename: async (source, target) => {
           if (source === staged) throw replacementError;
           if (rollbackFails && source === staged + '-previous') throw rollbackError;
+
           return fs.rename(source, target);
         }
       };
+
       await assert.rejects(replaceDirectory(staged, destination, operations), (error) => {
-        if (!rollbackFails) return error === replacementError;
+        if (!rollbackFails) {
+          return error === replacementError;
+        }
+
         assert.deepEqual(error.errors, [replacementError, rollbackError]);
         assert.ok(error.message.includes(staged + '-previous'));
+
         return true;
       });
       assert.equal(
@@ -51,6 +60,7 @@ test('successful replacement commits the new directory and removes the old backu
   const directory = await temporary(t);
   const staged = path.join(directory, 'staged');
   const destination = path.join(directory, 'package');
+
   await fs.mkdir(staged);
   await fs.mkdir(destination);
   await fs.writeFile(path.join(staged, 'candidate'), 'new');
@@ -66,6 +76,7 @@ test('failure pruning the previous version reports the already committed destina
   const staged = path.join(directory, 'staged');
   const destination = path.join(directory, 'package');
   const previous = staged + '-previous';
+
   await fs.mkdir(staged);
   await fs.mkdir(destination);
   await fs.writeFile(path.join(staged, 'candidate'), 'new');
@@ -75,15 +86,18 @@ test('failure pruning the previous version reports the already committed destina
     ...fs,
     rm: async (entry, options) => {
       if (entry === previous) throw cleanupError;
+
       return fs.rm(entry, options);
     }
   };
+
   await assert.rejects(replaceDirectory(staged, destination, operations), (error) => {
     assert.equal(error.committed, true, 'the error must say the new output is already live');
     assert.equal(error.cause, cleanupError);
     assert.equal(error.destination, destination);
     assert.equal(error.previousBackup, previous);
     assert.match(error.message, /cleanup/i);
+
     return true;
   });
   assert.equal(await fs.readFile(path.join(destination, 'candidate'), 'utf8'), 'new');

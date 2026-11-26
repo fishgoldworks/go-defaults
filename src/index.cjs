@@ -1,4 +1,5 @@
-const defaultsFor = require('./defaultsFor.cjs');
+const createDefaultsMerger = require('./createDefaultsMerger.cjs');
+const defaultIf = require('./defaultIf.cjs');
 const withDefaults = require('./withDefaults.cjs');
 
-module.exports = { defaultsFor, withDefaults };
+module.exports = { createDefaultsMerger, defaultIf, withDefaults };

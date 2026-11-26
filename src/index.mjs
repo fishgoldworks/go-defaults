@@ -1,4 +1,5 @@
 import Defaults from './index.cjs';
-const { defaultsFor, withDefaults } = Defaults;
-export { defaultsFor, withDefaults };
+const { createDefaultsMerger, defaultIf, withDefaults } = Defaults;
+
+export { createDefaultsMerger, defaultIf, withDefaults };
 export default Defaults;

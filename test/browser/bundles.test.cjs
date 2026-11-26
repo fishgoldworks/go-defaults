@@ -16,10 +16,13 @@ for (const filename of ['go-defaults.js', 'go-defaults.min.js']) {
     },
     () => {
       const file = path.join(directory, filename);
+
       assert.ok(fs.existsSync(file), 'Missing standalone browser bundle: ' + filename);
       const code = fs.readFileSync(file, 'utf8');
+
       for (const loader of ['global', 'commonjs', 'amd']) {
         const context = vm.createContext({});
+
         if (loader === 'commonjs') vm.runInContext('var module = { exports: {} };', context);
         if (loader === 'amd')
           vm.runInContext(
@@ -29,6 +32,7 @@ for (const filename of ['go-defaults.js', 'go-defaults.min.js']) {
         // No require, process or external module loader is available to the bundle.
         vm.runInContext('"use strict";\n' + code, context, { filename });
         const expression = loader === 'global' ? 'goDefaults' : loader === 'commonjs' ? 'module.exports' : 'captured';
+
         assert.equal(vm.runInContext('(' + checkBrowserContract.toString() + ')(' + expression + ')', context), true);
         if (loader !== 'global') assert.equal(context.goDefaults, undefined);
       }

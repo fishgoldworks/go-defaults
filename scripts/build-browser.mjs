@@ -15,6 +15,7 @@ export async function buildBrowserBundles(directory) {
   var module = { exports: {} };
   var exports = module.exports;`;
   const readable = path.join(directory, 'dist', browserBundles[0]);
+
   await build({
     // Keep the random staging directory out of esbuild's source labels.
     absWorkingDir: directory,
@@ -47,6 +48,7 @@ export async function buildBrowserBundles(directory) {
       }
     }
   );
+
   if (typeof minified.code !== 'string' || typeof minified.map !== 'string')
     throw new Error('Browser minification did not produce code and a source map');
   await writeFile(path.join(directory, 'dist', browserBundles[1]), minified.code + '\n');

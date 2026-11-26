@@ -1,17 +1,20 @@
 'use strict';
+
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const vm = require('node:vm');
 const targets = require('./helpers/runtime-targets.cjs');
 
-for (const [label, { withDefaults, defaultsFor }] of targets) {
+for (const [label, { withDefaults, createDefaultsMerger }] of targets) {
   const check = (name, body) => test(label + ': ' + name, body);
+
   check('rejects primitive layers at the start, middle and end', () => {
-    const configure = defaultsFor({ retries: 3 });
+    const configure = createDefaultsMerger();
+
     for (const invalid of [false, true, 0, -0, 123, NaN, Infinity, '', 'text', 1n, Symbol('layer')]) {
       for (const layers of [[invalid], [invalid, {}], [{}, invalid, {}], [{}, invalid]]) {
         assert.throws(() => withDefaults(...layers), TypeError);
-        assert.throws(() => configure(...layers), TypeError);
+        assert.throws(() => configure({ retries: 3 }, ...layers), TypeError);
       }
     }
   });
@@ -24,15 +27,19 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
       },
       { enabled: true }
     );
+
     ordinary[Symbol.toPrimitive] =
       ordinary.toString =
       ordinary.valueOf =
         () => {
           calls++;
+
           return 'invalid';
         };
+
     const invalid = [ordinary, ordinary.bind(null), async () => {}, function* () {}, class Config {}];
     const revoked = Proxy.revocable(() => {}, {});
+
     revoked.revoke();
     invalid.push(
       revoked.proxy,
@@ -53,8 +60,9 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
     );
     for (const layer of invalid) {
       assert.throws(() => withDefaults({}, layer), TypeError);
-      assert.throws(() => defaultsFor({})(layer), TypeError);
+      assert.throws(() => createDefaultsMerger()({}, layer), TypeError);
     }
+
     assert.equal(calls, 0);
   });
 
@@ -67,23 +75,27 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
     }
     const foreign = vm.runInNewContext('({ enabled: true })');
     const date = new Date(0);
+
     date.label = 'date';
-    for (const merge of [withDefaults, defaultsFor({})]) {
+    for (const merge of [withDefaults, createDefaultsMerger()]) {
       const result = merge(['item'], new Config(), foreign, date, new String('x'));
+
       assert.deepEqual(result, { 0: 'x', retries: 3, enabled: true, label: 'date' });
       assert.equal(Object.hasOwn(result, 'method'), false);
     }
   });
 
   check('validates in source order and stops before later getters', () => {
-    for (const merge of [withDefaults, defaultsFor({})]) {
+    for (const merge of [withDefaults, createDefaultsMerger()]) {
       const reads = [];
+
       assert.throws(
         () =>
           merge(
             {
               get first() {
                 reads.push('first');
+
                 return 1;
               }
             },
@@ -91,6 +103,7 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
             {
               get later() {
                 reads.push('later');
+
                 return 2;
               }
             }
@@ -99,6 +112,7 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
       );
       assert.deepEqual(reads, ['first']);
       const sentinel = new Error('getter failed first');
+
       assert.throws(
         () =>
           merge(
@@ -118,11 +132,13 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
     let calls = 0;
     const sentinel = new Error('coercion must not run');
     const invalid = function () {};
+
     invalid[Symbol.toPrimitive] = () => {
       calls += 1;
       throw sentinel;
     };
-    assert.throws(() => defaultsFor(invalid), TypeError);
+
+    assert.throws(() => createDefaultsMerger()(invalid), TypeError);
     assert.equal(calls, 0);
   });
 
@@ -134,16 +150,18 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
         throw new Error('unexpected read');
       }
     });
-    assert.throws(() => defaultsFor(invalid), TypeError);
+
+    assert.throws(() => createDefaultsMerger()(invalid), TypeError);
     assert.deepEqual(traps, []);
     const revoked = Proxy.revocable(function () {}, {});
+
     revoked.revoke();
-    assert.throws(() => defaultsFor(revoked.proxy), TypeError);
+    assert.throws(() => createDefaultsMerger()(revoked.proxy), TypeError);
   });
 
   test(`${label}: invalid default primitives produce TypeError`, () => {
-    for (const value of [undefined, null, false, true, 0, -0, NaN, Infinity, '', 'x', 1n, Symbol('x')]) {
-      assert.throws(() => defaultsFor(value), TypeError);
+    for (const value of [false, true, 0, -0, NaN, Infinity, '', 'x', 1n, Symbol('x')]) {
+      assert.throws(() => createDefaultsMerger()(value), TypeError);
     }
   });
 
@@ -165,20 +183,26 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
       [new WeakRef({}), 'deref'],
       [new FinalizationRegistry(() => {}), 'register']
     ];
+
     for (const [instance, inheritedKey] of samples) {
       const copied = withDefaults(instance);
+
       assert.equal(Object.getPrototypeOf(copied), Object.prototype);
       assert.equal(Object.hasOwn(copied, inheritedKey), false);
       assert.equal(copied[inheritedKey], undefined, `${instance.constructor.name}.${String(inheritedKey)}`);
-      const viaFactory = defaultsFor(instance)();
+      const viaFactory = createDefaultsMerger()(instance);
+
       assert.equal(Object.hasOwn(viaFactory, inheritedKey), false);
       assert.equal(viaFactory[inheritedKey], undefined);
     }
+
     for (const instance of [Object(true), Symbol.prototype, Object(Symbol('boxed')), BigInt.prototype, Object(1n)]) {
       const copied = withDefaults(instance);
+
       assert.deepEqual(Reflect.ownKeys(copied), []);
       assert.equal(copied.valueOf(), copied); // Object.prototype.valueOf returns the plain result object.
-      const configured = defaultsFor(instance)();
+      const configured = createDefaultsMerger()(instance);
+
       assert.deepEqual(Reflect.ownKeys(configured), []);
       assert.equal(configured.valueOf(), configured);
     }
@@ -189,13 +213,17 @@ for (const [label, { withDefaults, defaultsFor }] of targets) {
       instance.option = 7;
       Object.defineProperty(instance, 'hidden', { value: 'secret', enumerable: false });
       const merged = withDefaults(instance, { extra: true });
+
       assert.deepEqual(merged, { option: 7, extra: true });
       assert.equal(merged.getTime, undefined);
       assert.equal(merged.hidden, undefined);
-      const byFactory = defaultsFor(instance)({ option: undefined, extra: true });
+      const byFactory = createDefaultsMerger()(instance, { option: undefined, extra: true });
+
       assert.deepEqual(byFactory, { option: 7, extra: true });
     }
+
     const dataMethod = () => 3;
+
     assert.equal(withDefaults({ getTime: dataMethod }).getTime, dataMethod);
     assert.equal(withDefaults({ getTime: dataMethod }).getTime(), 3);
   });

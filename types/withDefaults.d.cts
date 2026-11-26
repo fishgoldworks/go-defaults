@@ -1,4 +1,4 @@
-import type { Merged, MergeSource, NonFunctionSource, NonFunctionSources } from './_merge.cjs';
+import type { Merged, MergeSource, SourceGuard, SourceGuards } from './_merge.cjs';
 
 /**
  * Performs a shallow merge of defaults and overrides into a new object, preserving earlier
@@ -28,13 +28,13 @@ import type { Merged, MergeSource, NonFunctionSource, NonFunctionSources } from 
  * @see [Full API documentation](../docs/API.md#withdefaultsdefaults-overrides)
  */
 declare function withDefaults<Defaults extends MergeSource, Overrides extends readonly MergeSource[]>(
-  defaults: Defaults & NonFunctionSource<Defaults>,
-  ...overrides: Overrides & NonFunctionSources<Overrides>
+  defaults: Defaults & SourceGuard<Defaults>,
+  ...overrides: Overrides & SourceGuards<Overrides>
 ): Merged<[Defaults, ...Overrides]>;
 
 // Preserve zero-argument calls, explicit source tuples and optional/union spreads.
 declare function withDefaults<Sources extends readonly MergeSource[]>(
-  ...sources: Sources & NonFunctionSources<Sources>
+  ...sources: Sources & SourceGuards<Sources>
 ): Merged<Sources>;
 
 export = withDefaults;

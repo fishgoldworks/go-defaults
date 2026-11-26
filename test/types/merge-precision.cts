@@ -1,6 +1,6 @@
-import { withDefaults, defaultsFor } from 'go-defaults';
+import { withDefaults, createDefaultsMerger } from 'go-defaults';
 import directMerge = require('go-defaults/withDefaults');
-import directDefaults = require('go-defaults/defaultsFor');
+import directDefaults = require('go-defaults/createDefaultsMerger');
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 type Expect<T extends true> = T;
 const layers9 = [
@@ -17,7 +17,7 @@ const layers9 = [
 const merged9 = withDefaults(...layers9);
 const first9: 0 = merged9.key0;
 const last9: 8 = merged9.key8;
-const configured9 = defaultsFor(layers9[0])(...layers9.slice(1));
+const configured9 = createDefaultsMerger()(layers9[0], ...layers9.slice(1));
 // A sliced array is unbounded at the type level and must stay conservative.
 // @ts-expect-error An arbitrary array cannot guarantee this key/value.
 const unsafeSlice9: number = configured9.key0;
@@ -58,7 +58,7 @@ const layers32 = [
 const merged32 = withDefaults(...layers32);
 const first32: 0 = merged32.key0;
 const last32: 31 = merged32.key31;
-const configured32 = defaultsFor(layers32[0])(...layers32.slice(1));
+const configured32 = createDefaultsMerger()(layers32[0], ...layers32.slice(1));
 // A sliced array is unbounded at the type level and must stay conservative.
 // @ts-expect-error An arbitrary array cannot guarantee this key/value.
 const unsafeSlice32: number = configured32.key0;
@@ -131,11 +131,12 @@ const layers64 = [
 const merged64 = withDefaults(...layers64);
 const first64: 0 = merged64.key0;
 const last64: 63 = merged64.key63;
-const configured64 = defaultsFor(layers64[0])(...layers64.slice(1));
+const configured64 = createDefaultsMerger()(layers64[0], ...layers64.slice(1));
 // A sliced array is unbounded at the type level and must stay conservative.
 // @ts-expect-error An arbitrary array cannot guarantee this key/value.
 const unsafeSlice64: number = configured64.key0;
-const configuredNine = defaultsFor(layers9[0])(
+const configuredNine = createDefaultsMerger()(
+  layers9[0],
   layers9[1],
   layers9[2],
   layers9[3],
@@ -146,9 +147,10 @@ const configuredNine = defaultsFor(layers9[0])(
   layers9[8]
 );
 const configuredNineLast: 8 = configuredNine.key8;
-const configured65 = defaultsFor({ extra: true })(...layers64);
+const configured65 = createDefaultsMerger()({ extra: true }, ...layers64);
 // @ts-expect-error Beyond the documented precision budget, types stay conservative.
 const overBudget: number = configured65.key0;
+
 declare const optionalLayer:
   | {
       retries?: string;
@@ -177,7 +179,8 @@ const optionalMany = withDefaults(
 const optionalManyValue: number | string = optionalMany.retries;
 // @ts-expect-error The default ensures a defined value.
 const optionalManyMissing: undefined = optionalMany.retries;
-const optionalFactory = defaultsFor({ retries: 1 })(
+const optionalFactory = createDefaultsMerger()(
+  { retries: 1 },
   optionalLayer,
   optionalLayer,
   optionalLayer,
@@ -195,17 +198,19 @@ const stringAccess: string = numericThenString['1'];
 const stringThenNumeric = directMerge({ '1': 'first' }, { 1: 42 });
 const reversedNumeric: number = stringThenNumeric[1];
 const reversedString: number = stringThenNumeric['1'];
-const factoryAlias = directDefaults({ 1: 42 })({ '1': 'last' });
+const factoryAlias = directDefaults()({ 1: 42 }, { '1': 'last' });
 const factoryNumeric: string = factoryAlias[1];
 const factoryString: string = factoryAlias['1'];
 const keyFallback = withDefaults({ 1: 42 }, { '1': undefined });
 const fallbackNumeric: number = keyFallback[1];
 const fallbackString: number = keyFallback['1'];
+
 declare const maybeNumeric: {
   1?: boolean;
 };
 const optionalNumeric = withDefaults({ '1': 42 }, maybeNumeric);
 const optionalNumericValue: number | boolean = optionalNumeric[1];
+
 declare const maybeString: {
   '1': boolean | undefined;
 };
@@ -222,6 +227,7 @@ const token = Symbol('token');
 const symbols = withDefaults({ [token]: 1, 1: false }, { '1': true });
 const retainedSymbol: number = symbols[token];
 const omitted = withDefaults({ 1: undefined }, { '1': undefined });
+
 // @ts-expect-error All-undefined keys remain omitted after canonicalization.
 omitted[1];
 // Optional branches do not erase guaranteed defaults. Union correlations may
@@ -243,7 +249,7 @@ const unionOverride = withDefaults({ a: 0, b: false }, branch);
 const guaranteedUnionA: 1 | 3 = unionOverride.a;
 const guaranteedUnionB: boolean | 2 = unionOverride.b;
 const [firstSource64, ...rest64] = layers64;
-const preciseFactory64: 63 = defaultsFor(firstSource64)(...rest64).key63;
+const preciseFactory64: 63 = createDefaultsMerger()(firstSource64, ...rest64).key63;
 const twice64 = [...layers64, ...layers64] as const;
 const beyondBudget = withDefaults(...twice64);
 // @ts-expect-error A 128-source tuple falls back without breaking compilation.
@@ -253,14 +259,15 @@ const notPromisedBeyondBudget: number = beyondBudget.key0;
 declare const dynamicLayers: any[];
 withDefaults(...dynamicLayers, ...layers64);
 withDefaults(...layers64, ...dynamicLayers);
-const reusableDefaults = defaultsFor({ enabled: true });
-reusableDefaults(...dynamicLayers, ...layers64);
-reusableDefaults(...layers64, ...dynamicLayers);
+const reusableDefaults = createDefaultsMerger();
+
+reusableDefaults({ enabled: true }, ...dynamicLayers, ...layers64);
+reusableDefaults({ enabled: true }, ...layers64, ...dynamicLayers);
 // @ts-expect-error An unknown spread must not hide a known function at the end.
 withDefaults(...dynamicLayers, ...layers64, () => {});
 // @ts-expect-error Known functions before a long prefix remain invalid too.
 withDefaults(() => {}, ...layers64, ...dynamicLayers);
 // @ts-expect-error The reusable function applies the same validation.
-reusableDefaults(...dynamicLayers, ...layers64, () => {});
+reusableDefaults({ enabled: true }, ...dynamicLayers, ...layers64, () => {});
 // @ts-expect-error The reusable function also rejects a known leading function.
-reusableDefaults(() => {}, ...layers64, ...dynamicLayers);
+reusableDefaults({ enabled: true }, () => {}, ...layers64, ...dynamicLayers);

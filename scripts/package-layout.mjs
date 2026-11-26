@@ -6,6 +6,7 @@ export const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 export const metadata = JSON.parse(await fs.readFile(path.join(root, 'package.json'), 'utf8'));
 export const names = Object.keys(createRequire(import.meta.url)('../src/index.cjs'));
 export const entries = ['index', ...names];
+export const runtimeFiles = [...entries.flatMap((name) => [name + '.cjs', name + '.mjs']), 'mergeDefaults.cjs'];
 export const browserBundles = ['go-defaults.js', 'go-defaults.min.js'];
 export const packageRoot = path.join(root, 'package');
 export const temporaryDirectoryNames = new Set(['.tmp', 'temp']);
@@ -18,10 +19,13 @@ export function entryTarget(name, prefix = './dist/') {
     require: prefix + name + '.cjs',
     default: prefix + name + '.cjs'
   };
+
   return [target, target.default];
 }
+
 export function consumerManifest({ browser = true } = {}) {
   const output = {};
+
   for (const key of [
     'name',
     'version',
@@ -48,11 +52,13 @@ export function consumerManifest({ browser = true } = {}) {
     output.unpkg = './dist/go-defaults.min.js';
     output.jsdelivr = './dist/go-defaults.min.js';
   }
+
   // Order only manifest fields; nested conditions and fallback arrays retain their precedence.
   for (const field of ['dependencies', 'optionalDependencies', 'peerDependencies']) {
     if (output[field])
       output[field] = Object.fromEntries(Object.entries(output[field]).sort(([a], [b]) => a.localeCompare(b)));
   }
+
   const fields = [
     'name',
     'version',
@@ -86,6 +92,7 @@ export function consumerManifest({ browser = true } = {}) {
     'peerDependencies',
     'peerDependenciesMeta'
   ];
+
   return Object.fromEntries(
     fields.filter((field) => output[field] !== undefined).map((field) => [field, output[field]])
   );

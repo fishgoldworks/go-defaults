@@ -1,3 +1,5 @@
+const mergeDefaults = require('./mergeDefaults.cjs');
+
 /**
  * Performs a shallow merge of defaults and overrides into a new object, preserving earlier
  * values when a property is missing or `undefined`.
@@ -29,59 +31,7 @@
  * @see [Full API documentation](../docs/API.md#withdefaultsdefaults-overrides)
  */
 function withDefaults(defaults = undefined, ...overrides) {
-  const merged = {};
-  let descriptor;
-
-  // Process defaults before overrides without allocating another array.
-  for (let index = -1; index < overrides.length; index += 1) {
-    const object = index === -1 ? defaults : overrides[index];
-    if (object === null || object === undefined) {
-      continue;
-    }
-    if (typeof object !== 'object') {
-      throw new TypeError('Source layers must be objects, null, or undefined.');
-    }
-
-    // include symbols and check each property's current enumerability.
-    for (const key of Reflect.ownKeys(object)) {
-      if (!Object.prototype.propertyIsEnumerable.call(object, key)) {
-        continue;
-      }
-
-      // capture accessor values once so checking and copying cannot diverge.
-      const value = object[key];
-      if (value !== undefined) {
-        // a new key with no inherited property, or an own writable data
-        // property created by this call, can be assigned without a descriptor.
-        // Recheck after reading the value: a source getter may change prototypes.
-        if (!(key in merged) || Object.prototype.hasOwnProperty.call(merged, key)) {
-          merged[key] = value;
-        } else {
-          // Preserve protection against __proto__, inherited setters/read-only
-          // properties, and inherited get/set fields on the descriptor itself.
-          // Allocate only on the uncommon path; reuse within this call, never
-          // across calls (getters may reenter, and inputs must not be retained).
-          if (descriptor === undefined) {
-            descriptor = {
-              value: undefined,
-              enumerable: true,
-              writable: true,
-              configurable: true
-            };
-          }
-          descriptor.value = value;
-          // `in` does not evaluate accessors. Detach only if a getter has
-          // polluted descriptor fields; ordinary descriptors keep the fast path.
-          if ('get' in descriptor || 'set' in descriptor) {
-            Object.setPrototypeOf(descriptor, null);
-          }
-          Object.defineProperty(merged, key, descriptor);
-        }
-      }
-    }
-  }
-
-  return merged;
+  return mergeDefaults(defaults, overrides);
 }
 
 module.exports = withDefaults;

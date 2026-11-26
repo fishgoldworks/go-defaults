@@ -21,6 +21,8 @@ temp/
 
 # Historical records and third-party material
 /LICENSE.md
+# Byte-identical shared checker; update at its canonical owner.
+/scripts/lib/check-library-readme.cjs
 
 # Editor and operating-system files
 .DS_Store

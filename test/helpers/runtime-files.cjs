@@ -6,6 +6,8 @@ module.exports = function runtimeFiles(directory) {
     .filter((entry) => entry.isFile() && entry.name.endsWith('.test.cjs'))
     .map((entry) => path.join(directory, entry.name))
     .sort();
+
   if (!tests.length) throw new Error('No Node contract tests found');
+
   return tests;
 };

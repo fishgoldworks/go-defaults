@@ -15,7 +15,7 @@ Start each commit subject with a capitalised imperative verb, such as `Update AP
 
 - Preserve the MIT licence and copyright notice. Publication requires explicit owner authorisation.
 - Keep authored runtime and tests in JavaScript; TypeScript is limited to declarations and consumer fixtures. Keep the runtime dependency-free.
-- Keep the public API focused on default values with [`withDefaults`](docs/API.md#withdefaultsdefaults-overrides) and [`defaultsFor`](docs/API.md#defaultsfordefaultvalues). Preserve their runtime identities, merge semantics and regression requirements.
+- Keep the public API focused on default values with [`defaultIf`](docs/API.md#defaultifvalue-fallback-predicate), [`withDefaults`](docs/API.md#withdefaultsdefaults-overrides) and [`createDefaultsMerger`](docs/API.md#createdefaultsmergeroptions). Preserve their runtime identities, selection and merge semantics, and regression requirements.
 - The untransformed diagnostic build is explicitly opt-in; never silently replace the normal esbuild build.
 
 ## Validation

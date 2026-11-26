@@ -1,10 +1,12 @@
-import { withDefaults, defaultsFor } from 'go-defaults';
+import { defaultIf, withDefaults, createDefaultsMerger } from 'go-defaults';
 import directMerge = require('go-defaults/withDefaults');
-import directFactory = require('go-defaults/defaultsFor');
-const configure = defaultsFor({ retries: 3 });
-const directConfigure = directFactory({ retries: 3 });
+import directFactory = require('go-defaults/createDefaultsMerger');
+const configure = createDefaultsMerger();
+const directConfigure = directFactory();
+const retryDefaults = { retries: 3 };
 const fn = () => ({ retries: 5 });
 const decorated = Object.assign(fn, { enabled: true });
+
 class Constructor {}
 declare const abstractConstructor: abstract new () => object;
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type -- Test the broad built-in Function boundary.
@@ -57,6 +59,7 @@ withDefaults(unchecked);
 const withDefaultsValid = withDefaults({ retries: 3 }, { retries: undefined, callback: fn });
 const withDefaultsNumber: number = withDefaultsValid.retries;
 const withDefaultsCallback: number = withDefaultsValid.callback().retries;
+
 // @ts-expect-error Known invalid layers must be rejected.
 directMerge(fn);
 // @ts-expect-error Known invalid layers must be rejected.
@@ -99,108 +102,114 @@ directMerge(unchecked);
 const directMergeValid = directMerge({ retries: 3 }, { retries: undefined, callback: fn });
 const directMergeNumber: number = directMergeValid.retries;
 const directMergeCallback: number = directMergeValid.callback().retries;
+
 // @ts-expect-error Known invalid layers must be rejected.
-configure(fn);
+configure(retryDefaults, fn);
 // @ts-expect-error Known invalid layers must be rejected.
-configure(decorated);
+configure(retryDefaults, decorated);
 // @ts-expect-error Known invalid layers must be rejected.
-configure(Constructor);
+configure(retryDefaults, Constructor);
 // @ts-expect-error Known invalid layers must be rejected.
-configure(abstractConstructor);
+configure(retryDefaults, abstractConstructor);
 // @ts-expect-error Known invalid layers must be rejected.
-configure(generalFunction);
+configure(retryDefaults, generalFunction);
 // @ts-expect-error Known invalid layers must be rejected.
-configure(maybeCallable);
+configure(retryDefaults, maybeCallable);
 // @ts-expect-error Known invalid layers must be rejected.
-configure(false);
+configure(retryDefaults, false);
 // @ts-expect-error Known invalid layers must be rejected.
-configure(123);
+configure(retryDefaults, 123);
 // @ts-expect-error Known invalid layers must be rejected.
-configure('text');
+configure(retryDefaults, 'text');
 // @ts-expect-error Known invalid layers must be rejected.
-configure(Symbol());
+configure(retryDefaults, Symbol());
 // @ts-expect-error Known invalid layers must be rejected.
-configure(1n);
+configure(retryDefaults, 1n);
 // @ts-expect-error Invalid branches remain rejected in layered and spread calls.
-configure({}, fn);
+configure(retryDefaults, {}, fn);
 // @ts-expect-error Invalid branches remain rejected in layered and spread calls.
-configure(fn, {});
+configure(retryDefaults, fn, {});
 // @ts-expect-error Invalid branches remain rejected in layered and spread calls.
-configure({}, fn, {});
+configure(retryDefaults, {}, fn, {});
 // @ts-expect-error Invalid branches remain rejected in layered and spread calls.
-configure(...callableArray);
+configure(retryDefaults, ...callableArray);
 // @ts-expect-error Invalid branches remain rejected in layered and spread calls.
-configure(...optionalCallable);
+configure(retryDefaults, ...optionalCallable);
 // @ts-expect-error Invalid branches remain rejected in layered and spread calls.
-configure(unchecked, fn);
+configure(retryDefaults, unchecked, fn);
 // @ts-expect-error Invalid branches remain rejected in layered and spread calls.
-configure(fn, unchecked);
-configure(null, undefined, optional);
-configure(opaque);
-configure(unchecked);
-const configureValid = configure({ retries: 3 }, { retries: undefined, callback: fn });
+configure(retryDefaults, fn, unchecked);
+configure(retryDefaults, null, undefined, optional);
+configure(retryDefaults, opaque);
+configure(retryDefaults, unchecked);
+const configureValid = configure(retryDefaults, { retries: 3 }, { retries: undefined, callback: fn });
 const configureNumber: number = configureValid.retries;
 const configureCallback: number = configureValid.callback().retries;
+
 // @ts-expect-error Known invalid layers must be rejected.
-directConfigure(fn);
+directConfigure(retryDefaults, fn);
 // @ts-expect-error Known invalid layers must be rejected.
-directConfigure(decorated);
+directConfigure(retryDefaults, decorated);
 // @ts-expect-error Known invalid layers must be rejected.
-directConfigure(Constructor);
+directConfigure(retryDefaults, Constructor);
 // @ts-expect-error Known invalid layers must be rejected.
-directConfigure(abstractConstructor);
+directConfigure(retryDefaults, abstractConstructor);
 // @ts-expect-error Known invalid layers must be rejected.
-directConfigure(generalFunction);
+directConfigure(retryDefaults, generalFunction);
 // @ts-expect-error Known invalid layers must be rejected.
-directConfigure(maybeCallable);
+directConfigure(retryDefaults, maybeCallable);
 // @ts-expect-error Known invalid layers must be rejected.
-directConfigure(false);
+directConfigure(retryDefaults, false);
 // @ts-expect-error Known invalid layers must be rejected.
-directConfigure(123);
+directConfigure(retryDefaults, 123);
 // @ts-expect-error Known invalid layers must be rejected.
-directConfigure('text');
+directConfigure(retryDefaults, 'text');
 // @ts-expect-error Known invalid layers must be rejected.
-directConfigure(Symbol());
+directConfigure(retryDefaults, Symbol());
 // @ts-expect-error Known invalid layers must be rejected.
-directConfigure(1n);
+directConfigure(retryDefaults, 1n);
 // @ts-expect-error Invalid branches remain rejected in layered and spread calls.
-directConfigure({}, fn);
+directConfigure(retryDefaults, {}, fn);
 // @ts-expect-error Invalid branches remain rejected in layered and spread calls.
-directConfigure(fn, {});
+directConfigure(retryDefaults, fn, {});
 // @ts-expect-error Invalid branches remain rejected in layered and spread calls.
-directConfigure({}, fn, {});
+directConfigure(retryDefaults, {}, fn, {});
 // @ts-expect-error Invalid branches remain rejected in layered and spread calls.
-directConfigure(...callableArray);
+directConfigure(retryDefaults, ...callableArray);
 // @ts-expect-error Invalid branches remain rejected in layered and spread calls.
-directConfigure(...optionalCallable);
+directConfigure(retryDefaults, ...optionalCallable);
 // @ts-expect-error Invalid branches remain rejected in layered and spread calls.
-directConfigure(unchecked, fn);
+directConfigure(retryDefaults, unchecked, fn);
 // @ts-expect-error Invalid branches remain rejected in layered and spread calls.
-directConfigure(fn, unchecked);
-directConfigure(null, undefined, optional);
-directConfigure(opaque);
-directConfigure(unchecked);
-const directConfigureValid = directConfigure({ retries: 3 }, { retries: undefined, callback: fn });
+directConfigure(retryDefaults, fn, unchecked);
+directConfigure(retryDefaults, null, undefined, optional);
+directConfigure(retryDefaults, opaque);
+directConfigure(retryDefaults, unchecked);
+const directConfigureValid = directConfigure(retryDefaults, { retries: 3 }, { retries: undefined, callback: fn });
 const directConfigureNumber: number = directConfigureValid.retries;
 const directConfigureCallback: number = directConfigureValid.callback().retries;
+
 // @ts-expect-error An explicit tuple cannot admit a function layer.
 withDefaults<[typeof fn]>(fn);
 // @ts-expect-error An explicit single override cannot admit a function layer.
-configure<typeof fn>(fn);
+configure<[{ retries: number }, typeof fn]>(retryDefaults, fn);
 // @ts-expect-error An explicit override tuple cannot admit a function layer.
-configure<[{}, typeof fn]>({}, fn);
-const explicitSingle: string = configure<{ retries: string }>({ retries: 'off' }).retries;
-const explicitTuple: string = configure<[{ retries: string }]>({ retries: 'off' }).retries;
+configure<[{ retries: number }, {}, typeof fn]>(retryDefaults, {}, fn);
+const explicitTuple: string = configure<[{ retries: number }, { retries: string }]>(
+  { retries: 3 },
+  { retries: 'off' }
+).retries;
 const tuple = [{ extra: true }, { retries: 'off' }] as const;
-const tupleResult: 'off' = configure(...tuple).retries;
+const tupleResult: 'off' = configure(retryDefaults, ...tuple).retries;
+
 declare const recordArray: Array<{ retries: number }>;
 withDefaults(...recordArray);
-configure(...recordArray);
+configure(retryDefaults, ...recordArray);
 declare const optionalRecord: [layer?: { retries: number }];
 withDefaults(...optionalRecord);
-configure(...optionalRecord);
+configure(retryDefaults, ...optionalRecord);
 withDefaults([]);
-configure(new Date());
+configure(retryDefaults, new Date());
 
 declare const tupleUnion: [{ retries: number }] | [typeof fn];
 declare const layeredUnion: [{ retries: number }, {}] | [typeof fn, {}];
@@ -248,58 +257,63 @@ directMerge(fn, ...anyArray);
 directMerge(...validTupleUnion);
 directMerge(...nullishTupleUnion);
 // @ts-expect-error A valid tuple branch cannot hide another branch containing a function.
-configure(...tupleUnion);
+configure(retryDefaults, ...tupleUnion);
 // @ts-expect-error A valid tuple branch cannot hide another branch containing a function.
-configure(...layeredUnion);
+configure(retryDefaults, ...layeredUnion);
 // @ts-expect-error A valid tuple branch cannot hide another branch containing a function.
-configure(...trailingUnion);
+configure(retryDefaults, ...trailingUnion);
 // @ts-expect-error A valid tuple branch cannot hide another branch containing a function.
-configure(...optionalUnion);
+configure(retryDefaults, ...optionalUnion);
 // @ts-expect-error A valid tuple branch cannot hide another branch containing a function.
-configure(...anyTupleUnion);
+configure(retryDefaults, ...anyTupleUnion);
 // @ts-expect-error A valid tuple branch cannot hide another branch containing a function.
-configure(...arrayUnion);
+configure(retryDefaults, ...arrayUnion);
 // @ts-expect-error A dynamic any spread cannot hide a known trailing function.
-configure(...anyArray, fn);
+configure(retryDefaults, ...anyArray, fn);
 // @ts-expect-error A dynamic any spread cannot hide a known leading function.
-configure(fn, ...anyArray);
-configure(...validTupleUnion);
-configure(...nullishTupleUnion);
+configure(retryDefaults, fn, ...anyArray);
+configure(retryDefaults, ...validTupleUnion);
+configure(retryDefaults, ...nullishTupleUnion);
 // @ts-expect-error A valid tuple branch cannot hide another branch containing a function.
-directConfigure(...tupleUnion);
+directConfigure(retryDefaults, ...tupleUnion);
 // @ts-expect-error A valid tuple branch cannot hide another branch containing a function.
-directConfigure(...layeredUnion);
+directConfigure(retryDefaults, ...layeredUnion);
 // @ts-expect-error A valid tuple branch cannot hide another branch containing a function.
-directConfigure(...trailingUnion);
+directConfigure(retryDefaults, ...trailingUnion);
 // @ts-expect-error A valid tuple branch cannot hide another branch containing a function.
-directConfigure(...optionalUnion);
+directConfigure(retryDefaults, ...optionalUnion);
 // @ts-expect-error A valid tuple branch cannot hide another branch containing a function.
-directConfigure(...anyTupleUnion);
+directConfigure(retryDefaults, ...anyTupleUnion);
 // @ts-expect-error A valid tuple branch cannot hide another branch containing a function.
-directConfigure(...arrayUnion);
+directConfigure(retryDefaults, ...arrayUnion);
 // @ts-expect-error A dynamic any spread cannot hide a known trailing function.
-directConfigure(...anyArray, fn);
+directConfigure(retryDefaults, ...anyArray, fn);
 // @ts-expect-error A dynamic any spread cannot hide a known leading function.
-directConfigure(fn, ...anyArray);
-directConfigure(...validTupleUnion);
-directConfigure(...nullishTupleUnion);
+directConfigure(retryDefaults, fn, ...anyArray);
+directConfigure(retryDefaults, ...validTupleUnion);
+directConfigure(retryDefaults, ...nullishTupleUnion);
 
 // An object-constrained generic can still be instantiated with a decorated function.
 function forwardGeneric<Layer extends object>(layer: Layer) {
   // @ts-expect-error The generic constraint does not establish a non-callable layer.
   withDefaults(layer);
   // @ts-expect-error The reusable function has the same conservative boundary.
-  configure(layer);
+  configure(retryDefaults, layer);
+
   return withDefaults(layer as object);
 }
+
 function forwardDictionary<Layer extends Record<string, unknown>>(layer: Layer) {
   // @ts-expect-error A dictionary intersection can still carry a call signature.
   directMerge(layer);
-  return directConfigure(layer as object);
+
+  return directConfigure(retryDefaults, layer as object);
 }
+
 function mergeGenericProperty<Value>(value: Value) {
   return withDefaults({ value }, { enabled: true });
 }
+
 const genericProperty: string = mergeGenericProperty('text').value;
 const genericCallback: () => number = mergeGenericProperty(() => 1).value;
 const genericFlag: boolean = mergeGenericProperty(1).enabled;
@@ -309,6 +323,7 @@ const shadowCall: { (value: string): number; call: number } = Object.assign((val
   call: 123
 });
 const shadowBind: { new (): object; bind: number } = Object.assign(class Example {}, { bind: 123 });
+
 declare const shadowAbstract: (abstract new (value: string) => object) & { apply: number };
 declare const shadowUnion: { retries: number } | typeof shadowApply;
 declare const shadowTuples: [{ retries: number }] | [typeof shadowBind];
@@ -333,58 +348,135 @@ directMerge(shadowAbstract);
 // @ts-expect-error A call/construct signature remains invalid when Function members are shadowed.
 directMerge(shadowUnion);
 // @ts-expect-error A call/construct signature remains invalid when Function members are shadowed.
-configure(shadowApply);
+configure(retryDefaults, shadowApply);
 // @ts-expect-error A call/construct signature remains invalid when Function members are shadowed.
-configure(shadowCall);
+configure(retryDefaults, shadowCall);
 // @ts-expect-error A call/construct signature remains invalid when Function members are shadowed.
-configure(shadowBind);
+configure(retryDefaults, shadowBind);
 // @ts-expect-error A call/construct signature remains invalid when Function members are shadowed.
-configure(shadowAbstract);
+configure(retryDefaults, shadowAbstract);
 // @ts-expect-error A call/construct signature remains invalid when Function members are shadowed.
-configure(shadowUnion);
+configure(retryDefaults, shadowUnion);
 // @ts-expect-error A call/construct signature remains invalid when Function members are shadowed.
-directConfigure(shadowApply);
+directConfigure(retryDefaults, shadowApply);
 // @ts-expect-error A call/construct signature remains invalid when Function members are shadowed.
-directConfigure(shadowCall);
+directConfigure(retryDefaults, shadowCall);
 // @ts-expect-error A call/construct signature remains invalid when Function members are shadowed.
-directConfigure(shadowBind);
+directConfigure(retryDefaults, shadowBind);
 // @ts-expect-error A call/construct signature remains invalid when Function members are shadowed.
-directConfigure(shadowAbstract);
+directConfigure(retryDefaults, shadowAbstract);
 // @ts-expect-error A call/construct signature remains invalid when Function members are shadowed.
-directConfigure(shadowUnion);
+directConfigure(retryDefaults, shadowUnion);
 // @ts-expect-error A call/construct signature remains invalid when Function members are shadowed.
-defaultsFor(shadowApply);
+createDefaultsMerger()(shadowApply);
 // @ts-expect-error A call/construct signature remains invalid when Function members are shadowed.
-defaultsFor(shadowCall);
+createDefaultsMerger()(shadowCall);
 // @ts-expect-error A call/construct signature remains invalid when Function members are shadowed.
-defaultsFor(shadowBind);
+createDefaultsMerger()(shadowBind);
 // @ts-expect-error A call/construct signature remains invalid when Function members are shadowed.
-defaultsFor(shadowAbstract);
+createDefaultsMerger()(shadowAbstract);
 // @ts-expect-error A call/construct signature remains invalid when Function members are shadowed.
-defaultsFor(shadowUnion);
+createDefaultsMerger()(shadowUnion);
 // @ts-expect-error A call/construct signature remains invalid when Function members are shadowed.
-directFactory(shadowApply);
+directFactory()(shadowApply);
 // @ts-expect-error A call/construct signature remains invalid when Function members are shadowed.
-directFactory(shadowCall);
+directFactory()(shadowCall);
 // @ts-expect-error A call/construct signature remains invalid when Function members are shadowed.
-directFactory(shadowBind);
+directFactory()(shadowBind);
 // @ts-expect-error A call/construct signature remains invalid when Function members are shadowed.
-directFactory(shadowAbstract);
+directFactory()(shadowAbstract);
 // @ts-expect-error A call/construct signature remains invalid when Function members are shadowed.
-directFactory(shadowUnion);
+directFactory()(shadowUnion);
 // @ts-expect-error A tuple union cannot hide a constructor with shadowed Function members.
 withDefaults(...shadowTuples);
 const withDefaultsPlainMethods = withDefaults({ call: 1, apply: 2, bind: 3 });
 const withDefaultsPlainApply: number = withDefaultsPlainMethods.apply;
+
 // @ts-expect-error A tuple union cannot hide a constructor with shadowed Function members.
 directMerge(...shadowTuples);
 const directMergePlainMethods = directMerge({ call: 1, apply: 2, bind: 3 });
 const directMergePlainApply: number = directMergePlainMethods.apply;
+
 // @ts-expect-error A tuple union cannot hide a constructor with shadowed Function members.
-configure(...shadowTuples);
-const configurePlainMethods = configure({ call: 1, apply: 2, bind: 3 });
+configure(retryDefaults, ...shadowTuples);
+const configurePlainMethods = configure(retryDefaults, { call: 1, apply: 2, bind: 3 });
 const configurePlainApply: number = configurePlainMethods.apply;
+
 // @ts-expect-error A tuple union cannot hide a constructor with shadowed Function members.
-directConfigure(...shadowTuples);
-const directConfigurePlainMethods = directConfigure({ call: 1, apply: 2, bind: 3 });
+directConfigure(retryDefaults, ...shadowTuples);
+const directConfigurePlainMethods = directConfigure(retryDefaults, { call: 1, apply: 2, bind: 3 });
 const directConfigurePlainApply: number = directConfigurePlainMethods.apply;
+
+declare const scalarBrand: unique symbol;
+
+type BrandedScalar<Value> = Value & { readonly [scalarBrand]: 'scalar' };
+
+declare const brandedText: BrandedScalar<string>;
+declare const brandedNumber: BrandedScalar<number>;
+declare const brandedBoolean: BrandedScalar<boolean>;
+declare const brandedBigInt: BrandedScalar<bigint>;
+declare const brandedSymbol: BrandedScalar<symbol>;
+declare const brandedScalar:
+  typeof brandedText | typeof brandedNumber | typeof brandedBoolean | typeof brandedBigInt | typeof brandedSymbol;
+declare const brandedUnion: typeof brandedText | { retries: number };
+declare const optionalBranded: [first?: typeof brandedText];
+declare const brandedArray: Array<typeof brandedText | { retries: number }>;
+// @ts-expect-error A branded string remains an invalid primitive source layer.
+withDefaults(brandedText);
+// @ts-expect-error A branded number remains an invalid primitive source layer.
+withDefaults(brandedNumber);
+// @ts-expect-error A branded boolean remains an invalid primitive source layer.
+withDefaults(brandedBoolean);
+// @ts-expect-error A branded bigint remains an invalid primitive source layer.
+withDefaults(brandedBigInt);
+// @ts-expect-error A branded symbol remains an invalid primitive source layer.
+withDefaults(brandedSymbol);
+// @ts-expect-error A later layer cannot contain a branded primitive.
+withDefaults({}, brandedScalar);
+// @ts-expect-error A trailing object cannot hide an invalid earlier layer.
+withDefaults(brandedScalar, {});
+// @ts-expect-error Tuple spreads retain known invalid primitive layers.
+withDefaults(...([{}, brandedScalar] as const));
+// @ts-expect-error An ordinary record branch cannot hide an invalid primitive branch.
+withDefaults(brandedUnion);
+// @ts-expect-error Optional tuples retain invalid primitive branches.
+withDefaults(...optionalBranded);
+// @ts-expect-error Dynamic arrays retain known invalid primitive branches.
+withDefaults(...brandedArray);
+// @ts-expect-error An unchecked layer cannot hide a separate known invalid primitive.
+withDefaults(unchecked, brandedText);
+// @ts-expect-error An unchecked layer cannot hide a separate known invalid primitive.
+withDefaults(brandedText, unchecked);
+// @ts-expect-error Focused imports use the same source guard.
+directMerge(brandedScalar);
+// @ts-expect-error A factory requires object defaults, including for branded scalars.
+createDefaultsMerger()(brandedScalar);
+// @ts-expect-error A focused factory requires object defaults.
+directFactory()(brandedScalar);
+// @ts-expect-error Returned functions reject branded primitive overrides.
+configure(retryDefaults, brandedScalar);
+// @ts-expect-error Returned functions reject invalid optional tuple members.
+configure(retryDefaults, ...optionalBranded);
+// @ts-expect-error Returned functions reject invalid unbounded array members.
+configure(retryDefaults, ...brandedArray);
+// @ts-expect-error Focused returned functions share the same source guards.
+directConfigure(retryDefaults, brandedScalar);
+
+const brandedRecord = withDefaults({ id: brandedText, count: brandedNumber, [scalarBrand]: 'record' as const });
+const retainedId: typeof brandedText = brandedRecord.id;
+const retainedCount: typeof brandedNumber = brandedRecord.count;
+const retainedBrand: 'record' = brandedRecord[scalarBrand];
+const selectedBrand: typeof brandedText = defaultIf(brandedText, null);
+const configuredBrand: typeof brandedSymbol = createDefaultsMerger()(
+  { id: brandedSymbol },
+  {
+    id: undefined
+  }
+).id;
+
+// eslint-disable-next-line @typescript-eslint/no-wrapper-object-types -- The wrapper object must remain a valid layer.
+declare const symbolWrapper: Symbol;
+// eslint-disable-next-line @typescript-eslint/no-wrapper-object-types -- The wrapper object must remain a valid layer.
+declare const bigIntWrapper: BigInt;
+withDefaults(new String('text'), new Number(7), new Boolean(true), symbolWrapper, bigIntWrapper);
+createDefaultsMerger()(new String('text'), new Number(7), new Boolean(true), symbolWrapper, bigIntWrapper);
